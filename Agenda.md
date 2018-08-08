@@ -10,6 +10,11 @@ Funções:
 Interface
 	- Home - Conexão servidor
 	- Start - todas funções
-	
+
 Web server
 
+Atribuições:
+
+	Interface
+	Funcionamento App
+	Rede 
