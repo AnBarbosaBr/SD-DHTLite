@@ -1,0 +1,144 @@
+<html>
+    <head>
+        <title> Web Agenda </title>
+     <script src="jquery-3.3.1.min.js"></script>       
+    <script>
+        function showAdd() {
+            var x = document.getElementById("resultado-busca");
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            } else {
+                x.style.display = "none";
+            }
+        }
+        
+         function showAlterar() {
+            var x = document.getElementById("resultado-alterar");
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            } else {
+                x.style.display = "none";
+            }
+        }
+        
+        function showEncontrar() {
+            var x = document.getElementById("resultado-encontrar");
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            } else {
+                x.style.display = "none";
+            }
+        }
+        
+        function showExcluir() {
+            var x = document.getElementById("resultado-excluir");
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            } else {
+                x.style.display = "none";
+            }
+        }
+    </script>
+
+    </head>
+    <body>
+        <div class="navbar">
+            <ul>
+              <li><a href="home.html">Conexão</a></li>
+              <li><a href="webagenda.html">WebAgenda</a></li>
+              <li><a href="contact.html">Contacte</a></li>
+              <li><a href="about.html">Sobre</a></li>
+            </ul>
+        </div>
+        <h1>Usuarios</h1>
+        <form>
+            User Name: <input type="text"  id="username"><br>
+            Nome: <input type="text" id="nome"><br>
+            Email: <input type="text" id="email"><br>
+            <br>
+            <button type="submit" id="adicionar" onClick="showAdd()">Adicionar</button>
+            <button type="submit" id="alterar" onClick="showAlterar()">Alterar</button><br>
+            <button type="submit" id="localizar" onClick="showEncontrar()">Encontrar</button>
+            <button type="submit" id="deletar" onClick="showExcluir()">Excluir</button><br>
+        </form>
+        
+        
+        <h2>Resultado da Requisição</h2>
+        <div id="resultado-encontrar" hidden>
+            <h3> Encontrado! </h3>
+            <table>
+                <tr>
+                    <td>User Name: </td>
+                    <td> UserExemploHacker </td>
+                </tr>
+                <tr>
+                    <td>Nome: </td>
+                    <td>Fulano de Beltrano Ciclano</td>
+                </tr>
+                <tr>
+                    <td>Email: </td>
+                    <td>fbc-hacker@aluno.ufabc.edu.br</td>
+            </table>
+        </div>
+        
+        
+        <div id="resultado-adicionar" hidden> 
+            <h3> Adicionado! </h3>
+            <table>
+                <tr>
+                    <td>User Name: </td>
+                    <td> UserExemploHacker </td>
+                </tr>
+                <tr>
+                    <td>Nome: </td>
+                    <td>Fulano de Beltrano Ciclano</td>
+                </tr>
+                <tr>
+                    <td>Email: </td>
+                    <td>fbc-hacker@aluno.ufabc.edu.br</td>
+            </table>
+        </div>
+        
+        
+        <div id="resultado-alterar" hidden> 
+            <h3> Alterado! </h3>
+            <table>
+                <tr>
+                    <td>User Name: </td>
+                    <td> UserExemploHacker </td>
+                </tr>
+                <tr>
+                    <td>Nome: </td>
+                    <td>Fulano de Beltrano Ciclano</td>
+                </tr>
+                <tr>
+                    <td>Email: </td>
+                    <td>fbc-hacker@aluno.ufabc.edu.br</td>
+            </table>
+        </div>
+        
+        
+        
+        <div id="resultado-excluir" hidden> 
+             <h3> Deletar? </h3>
+             Você tem certeza? Isso afetará todos os usuários. Essa operação não pode ser desfeita.
+            <table>
+                <tr>
+                    <td>User Name: </td>
+                    <td> UserExemploHacker </td>
+                </tr>
+                <tr>
+                    <td>Nome: </td>
+                    <td>Fulano de Beltrano Ciclano</td>
+                </tr>
+                <tr>
+                    <td>Email: </td>
+                    <td>fbc-hacker@aluno.ufabc.edu.br</td>
+            </table>
+            
+            <form> <input type="submit" value="Deletar Usuário!"></form>
+        </div>
+        
+    </body>
+    
+</html>
