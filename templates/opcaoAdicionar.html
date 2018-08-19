@@ -1,0 +1,34 @@
+
+<form action="/add">
+        <div class="form-group">
+            <label for="usuario">Nome de Usuário</label>
+            <input type="text"  
+                    class="form-control" id="usuario" 
+                    aria-describedby="useraddHelp"
+                    placeholder="Nome de Usuário">
+            <small id="useraddHelp" class="form-text text-muted">Usuário a adicionar.</small>
+        </div>
+        <div class="form-group">
+            <label for="nome">Nome Real</label>
+            <input type="text"  
+                    class="form-control" id="nome" 
+                    aria-describedby="nomeAddHelp"
+                    placeholder="Nome Completo.">
+            <small id="nomeAddHelp" class="form-text text-muted">Nome real do usuário que será adicionado à rede.</small>
+        </div>
+        <div class="form-group">
+            <label for="email">E-mail</label>
+            <input type="email"  
+                    class="form-control" id="email" 
+                    aria-describedby="emailAddHelp"
+                    placeholder="Nome Completo.">
+            <small id="emailAddHelp" class="form-text text-muted">Email do usuário.</small>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="atualizarUsuario">
+            <label class="form-check-label" for="atualizarUsuario">Atualizar se já existir</label>
+        </div>
+            <button type="submit" class="btn btn-primary">Adicionar</button>
+        </form>    
+            
+        
