@@ -21,7 +21,7 @@ def connect():
 			ip = request.form['ip']
 			port = request.form['port']
 			print(ip, port)
-			s_m = "Conectado!"
+			s_m = ["Conectado!"]
 
 			#conectar com o node do ip e port indicados
 			#else
@@ -48,11 +48,11 @@ def add():
 			'email': email
 		}
 		print(usuarios)
-		s_m = "{} adicionado com sucesso".format(username)
+		s_m = ["{} adicionado com sucesso".format(username)]
 
 
 		#metodo de adicionar contato na rede
-		return render_template('sucess.html', sucess_message=s_m)
+		return render_template('sucess.html', success_message=s_m)
 
 	except Exception as err:
 		 return render_template('failure.html', failure_message=str(err))
@@ -64,9 +64,9 @@ def delete():
 		if username not in usuarios:
 			raise Exception("Nome de usuario não cadastrado")
 		del usuarios[username]
-		s_m = "{} apagado com sucesso".format(username)
+		s_m = ["{} apagado com sucesso".format(username)]
 		#metodo de deletar contato da rede
-		return render_template('sucess.html', sucess_message=s_m)
+		return render_template('sucess.html', success_message=s_m)
 	except Exception as err:
 		 return render_template('failure.html', failure_message=str(err))
 
@@ -78,9 +78,8 @@ def search():
 			raise Exception("Nome de usuario não cadastrado")
 		name = usuarios[username]['nome']
 		email = usuarios[username]['email']
-
-		s_m = "Usuario: {},\nNome: {}\nEmail:{}".format(username, name, email)
-		return render_template('sucess.html', sucess_message=s_m)
+		s_m = ['Usuario: ' + username, "Nome: " + name, "Email: " + email]
+		return render_template('sucess.html', success_message=s_m)
 	except Exception as err:
 		 return render_template('failure.html', failure_message=str(err))
 

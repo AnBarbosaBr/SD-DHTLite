@@ -12,7 +12,9 @@
 <body>
 
 <div class="container">
-  {{success_message}}
+  {% for msg in success_message %}
+  <p>{{msg}}</p>
+  {% endfor %}
 </br>
   <form method=";" action="/">
     <button type="submit" class="btn btn-primary">Voltar</button>
