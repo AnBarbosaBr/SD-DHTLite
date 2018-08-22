@@ -1,10 +1,15 @@
 from flask import Flask, request, render_template
 from jinja2 import Template
 import sys
+import dhtApi
 
 app = Flask(__name__)
 
 default_address = '0.0.0.0/9000'
+
+# Criamos uma instância do adaptador da API:
+dhtRepo = dhtApi.FakeApi();
+dhtRepo.join(["endereco ficticio de servidor 1", "end fic 2", "end fic 3"]);
 
 usuarios = {}
 
@@ -22,7 +27,9 @@ def connect():
 			port = request.form['port']
 			print(ip, port)
 			s_m = ["Conectado!"]
-
+			
+			## Incluindo chamado à API.
+			dhtRepo.join([str(ip)+str(port)]);
 			#conectar com o node do ip e port indicados
 			#else
 			#conectar com o endereço default
@@ -34,6 +41,8 @@ def connect():
 
 @app.route("/dc", methods=['GET'])
 def dc():
+	## Incluindo chamado à API.
+	dhtRepo.leave()
 	#metodo de desconectar do node
 	return "Desconectado"
 
@@ -43,11 +52,17 @@ def add():
 		username = request.form['usuario']
 		name = request.form['nome']
 		email = request.form['email']
-		usuarios[username] = {
-			'nome' : name,
-			'email': email
-		}
-		print(usuarios)
+		
+		
+		#Incluído chamado à API.
+		dhtRepo.store(username, {'nome':name , 'email': email})
+		
+#		usuarios[username] = {
+#			'nome' : name,
+#			'email': email
+#		}
+#		print(usuarios)
+		print(dhtRepo.usuarios)
 		s_m = ["{} adicionado com sucesso".format(username)]
 
 
@@ -61,9 +76,15 @@ def add():
 def delete():
 	try:
 		username = request.form['usuario']
-		if username not in usuarios:
-			raise Exception("Nome de usuario não cadastrado")
-		del usuarios[username]
+		
+		#if username not in usuarios:
+		#	raise Exception("Nome de usuario não cadastrado")
+		#del usuarios[username]
+				
+		
+		if not dhtRepo.remove(username):
+			raise Exception("Nome de usuario não cadastrado")	
+		
 		s_m = ["{} apagado com sucesso".format(username)]
 		#metodo de deletar contato da rede
 		return render_template('sucess.html', success_message=s_m)
@@ -74,10 +95,16 @@ def delete():
 def search():
 	try:
 		username = request.form['usuario']
-		if username not in usuarios:
+		
+#		if username not in usuarios:
+		usuarioEncontrado = dhtRepo.retrieve(username)
+		if not usuarioEncontrado:
 			raise Exception("Nome de usuario não cadastrado")
-		name = usuarios[username]['nome']
-		email = usuarios[username]['email']
+		#name = usuarios[username]['nome']
+		#email = usuarios[username]['email']
+		name = usuarioEncontrado['nome']
+		email = usuarioEncontrado['email']
+		
 		s_m = ['Usuario: ' + username, "Nome: " + name, "Email: " + email]
 		return render_template('sucess.html', success_message=s_m)
 	except Exception as err:

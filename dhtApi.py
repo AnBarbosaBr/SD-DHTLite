@@ -20,6 +20,9 @@ class DhtApi(object, metaclass=abc.ABCMeta):
 	def retrieve(self, chave):
 		pass
 		
+	@abc.abstractmethod
+	def remove(self, chave):
+		pass	
 		
 
 class FakeApi(DhtApi):	
@@ -42,7 +45,7 @@ class FakeApi(DhtApi):
 		
 	def store(self, chave, valor):
 		if(self.conectado):
-			self.usuarios[chave] = { valor }
+			self.usuarios[chave] = valor
 		else:
 			raise Exception("Você não está conectado.");
 			
@@ -55,5 +58,11 @@ class FakeApi(DhtApi):
 		else:
 			raise Excetion("Você não está conectado.");
 	
+	def remove(self, chave):
+		if chave not in self.usuarios:
+			return False;
+		else:
+			del self.usuarios[chave]
+			return True;
 
-
+	
