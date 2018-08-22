@@ -1,9 +1,9 @@
 
-<form action="/add">
+<form action="/add" method="post">
         <div class="form-group">
             <label for="usuario">Nome de Usuário</label>
             <input type="text"  
-                    class="form-control" id="usuario" 
+                    class="form-control" id="usuario" name="usuario" 
                     aria-describedby="useraddHelp"
                     placeholder="Nome de Usuário">
             <small id="useraddHelp" class="form-text text-muted">Usuário a adicionar.</small>
@@ -11,7 +11,7 @@
         <div class="form-group">
             <label for="nome">Nome Real</label>
             <input type="text"  
-                    class="form-control" id="nome" 
+                    class="form-control" id="nome" name="nome" 
                     aria-describedby="nomeAddHelp"
                     placeholder="Nome Completo.">
             <small id="nomeAddHelp" class="form-text text-muted">Nome real do usuário que será adicionado à rede.</small>
@@ -19,7 +19,7 @@
         <div class="form-group">
             <label for="email">E-mail</label>
             <input type="email"  
-                    class="form-control" id="email" 
+                    class="form-control" id="email" name="email"
                     aria-describedby="emailAddHelp"
                     placeholder="Nome Completo.">
             <small id="emailAddHelp" class="form-text text-muted">Email do usuário.</small>
