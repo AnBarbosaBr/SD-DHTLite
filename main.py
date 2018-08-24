@@ -8,8 +8,8 @@ app = Flask(__name__)
 default_address = '0.0.0.0/9000'
 
 # Criamos uma instância do adaptador da API:
-dhtRepo = dhtApi.FakeApi();
-dhtRepo.join(["endereco ficticio de servidor 1", "end fic 2", "end fic 3"]);
+dhtRepo = dhtApi.FakeApi()
+dhtRepo.join(["endereco ficticio de servidor 1", "end fic 2", "end fic 3"])
 
 usuarios = {}
 
@@ -29,7 +29,7 @@ def connect():
 			s_m = ["Conectado!"]
 			
 			## Incluindo chamado à API.
-			dhtRepo.join([str(ip)+str(port)]);
+			dhtRepo.join([str(ip)+str(port)])
 			#conectar com o node do ip e port indicados
 			#else
 			#conectar com o endereço default
@@ -106,7 +106,7 @@ def search():
 		email = usuarioEncontrado['email']
 		
 		s_m = ['Usuario: ' + username, "Nome: " + name, "Email: " + email]
-		return render_template('sucess.html', success_message=s_m)
+		return render_template('sucess_search.html', username=username, nome=name, email=email)
 	except Exception as err:
 		 return render_template('failure.html', failure_message=str(err))
 
