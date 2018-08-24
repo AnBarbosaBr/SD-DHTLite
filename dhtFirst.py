@@ -26,8 +26,6 @@ class Dht(DhtApi):
 				break
 			except ConnectionRefusedError as conerr:
 				print(conerr)
-			except Exception as err:
-				print(type(err))
 
 		if found:
 			self.recvSocket.listen()
@@ -47,14 +45,26 @@ class Dht(DhtApi):
 																		  self.port)
 				self.sendSocket.send(msg.encode())
 				self.sendSocket.close()
+		self.conectado = True
 
 	def leave(self):
+		if not self.conectado:
+			return "Nao conectado ainda"
 		try:
 			self.sendSocket.connect((self.rAndLNodes[1][1], self.rAndLNodes[1][2]))
 			msg = "LEAVE {} {} {} \n".format(self.rAndLNodes[0][0],
 																			 self.rAndLNodes[0][1],
 																			 self.rAndLNodes[0][2])
 			self.sendSocket.send(msg.encode())
+			self.sendSocket.close()
+
+			self.sendSocket.connect((self.rAndLNodes[0][1], self.rAndLNodes[0][2]))
+			msg = "NODE_GONE {} {} {} \n".format(self.rAndLNodes[1][0],
+																			 self.rAndLNodes[1][1],
+																			 self.rAndLNodes[1][2])
+			self.sendSocket.send(msg.encode())
+			self.sendSocket.close()
+			
 		except Exception as err:
 			print(err)
 
