@@ -1,13 +1,14 @@
 from dhtApi import DhtApi
 from threading import Thread
+import sys
 import socket
 
 class Dht(DhtApi):
-	def __init__(self):
+	def __init__(self, port, id_this):
 		self.conectado = False
 		self.addr = '127.0.0.1'
-		self.port = 7001
-		self.id = 1
+		self.port = port
+		self.id = id_this
 		self.sucessor = None
 		self.predecessor = None
 		self.sendSocket = socket.socket()
@@ -47,6 +48,7 @@ class Dht(DhtApi):
 																		  self.port)
 				self.sendSocket.send(msg.encode())
 				self.sendSocket.close()
+
 		else:
 			thisNode = (self.id, self.addr, self.port)
 			self.sucessor = self.predecessor = thisNode
@@ -54,6 +56,7 @@ class Dht(DhtApi):
 		self.conectado = True
 
 		thread = Thread(target=self.listen)
+		thread.start()
 
 	def leave(self):
 		if not self.conectado:
@@ -77,6 +80,7 @@ class Dht(DhtApi):
 			print(err)
 
 	def listen(self):
+		stop = False
 		while not stop:
 			try:
 				self.recvSocket.listen()
@@ -140,7 +144,7 @@ class Dht(DhtApi):
 	def remove(self, chave):
 		pass	
 
-hosts = [('127.0.0.1', 7000), ('127.0.0.1', 7002)]
-d = Dht()
+hosts = [('127.0.0.1', 7001), ('127.0.0.1', 7002)]
+d = Dht(int(sys.argv[1]), int(sys.argv[2]))
 d.join(hosts)
 
