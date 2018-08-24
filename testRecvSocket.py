@@ -24,6 +24,14 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 															 7001,
 															 )
 	time.sleep(1)
-	sS.connect(('127.0.0.1', 7001))
+	sS.connect(('127.0.0.1', 7000))
 	sS.send(msg.encode())
 	print("sent", msg)
+	conn, addr = s.accept()
+	with conn:
+		print('Connected by', addr)
+		while True:
+			data = conn.recv(1024)
+			if not data:
+				break
+			print(data)

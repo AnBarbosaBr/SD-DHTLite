@@ -1,5 +1,6 @@
 from dhtApi import DhtApi
 from threading import Thread
+import time
 import sys
 import socket
 
@@ -40,7 +41,8 @@ class Dht(DhtApi):
 			if cmd[0] == "JOIN_OK":
 				self.sucessor = (int(cmd[1]), cmd[2], int(cmd[3]))
 				self.predecessor = (int(cmd[4]), cmd[5], int(cmd[6]))
-				#print(sucessor, predecessor)
+				print(self.sucessor, self.predecessor)
+				#time.sleep(5)
 				self.sendSocket.connect((self.predecessor[1], self.predecessor[2]))
 
 				msg = "NEW_NODE {} {} {}".format(self.id, 
@@ -48,13 +50,14 @@ class Dht(DhtApi):
 																		  self.port)
 				self.sendSocket.send(msg.encode())
 				self.sendSocket.close()
+				print("Here", sucessor, predecessor)
 
 		else:
 			thisNode = (self.id, self.addr, self.port)
 			self.sucessor = self.predecessor = thisNode
 
 		self.conectado = True
-
+		print("thread")
 		thread = Thread(target=self.listen)
 		thread.start()
 
@@ -81,9 +84,10 @@ class Dht(DhtApi):
 
 	def listen(self):
 		stop = False
+		self.recvSocket.listen()
 		while not stop:
 			try:
-				self.recvSocket.listen()
+				print("asa")
 				conn, addr = self.recvSocket.accept()
 				with conn:
 					data = conn.recv(1024)
@@ -104,9 +108,13 @@ class Dht(DhtApi):
 
 						else:
 							self.sendSocket.connect((ip_new, port_new))
-							msg = "JOIN_OK {} {} {}".format(self.id, 
+							msg = "JOIN_OK {} {} {} {} {} {}".format(self.id, 
 																		  self.addr,
-																		  self.port)
+																		  self.port,
+																		  self.predecessor[0],
+																		  self.predecessor[1],
+																		  self.predecessor[2])
+							print(msg)
 							self.sendSocket.send(msg.encode())
 							self.sendSocket.close()
 
@@ -131,8 +139,8 @@ class Dht(DhtApi):
 					else:
 						print(cmd)
 
-			except Exception as err:
-				stop = true
+			except ValueError as err:
+				stop = True
 				print(err)
 
 	def store(self, chave, valor):
@@ -144,7 +152,7 @@ class Dht(DhtApi):
 	def remove(self, chave):
 		pass	
 
-hosts = [('127.0.0.1', 7001), ('127.0.0.1', 7002)]
+hosts = [('127.0.0.1', 7000), ('127.0.0.1', 7001)]
 d = Dht(int(sys.argv[1]), int(sys.argv[2]))
 d.join(hosts)
 
