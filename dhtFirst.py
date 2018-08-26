@@ -5,18 +5,19 @@ import sys
 import socket
 
 class Dht(DhtApi):
-	def __init__(self, port, id_this):
+	def __init__(self):
 		self.conectado = False
 		self.addr = '127.0.0.1'
-		self.port = port
-		self.id = id_this
 		self.sucessor = None
 		self.predecessor = None
 		self.sendSocket = socket.socket()
 		self.recvSocket = socket.socket()
-		self.recvSocket.bind((self.addr, self.port))
+		
 
-	def join(self, listaDePossiveisHosts):
+	def join(self, listaDePossiveisHosts, port, id_this):
+		self.port = port
+		self.id = id_this
+		self.recvSocket.bind((self.addr, self.port))
 		#Inicio do join, checa a lista dos possíveis hosts e conecta no primeiro que conseguir 
 		found = False
 		for host in listaDePossiveisHosts:
@@ -88,9 +89,9 @@ class Dht(DhtApi):
 			#predecessor para atualizacao
 			self.sendSocket = socket.socket()
 			self.sendSocket.connect((self.sucessor[1], self.sucessor[2]))
-			msg = "LEAVE {} {} {} \n".format(self.predecessor[0][0],
-																			 self.predecessor[0][1],
-																			 self.predecessor[0][2])
+			msg = "LEAVE {} {} {} \n".format(self.predecessor[0],
+																			 self.predecessor[1],
+																			 self.predecessor[2])
 			self.sendSocket.send(msg.encode())
 			self.sendSocket.close()
 
@@ -209,6 +210,6 @@ if __name__ == "__main__":
 	#Para executar como main e necessario o seguinte comando
 	#python dhtfirst.py [porta] [id]
 	hosts = [('127.0.0.1', 7001)]
-	d = Dht(int(sys.argv[1]), int(sys.argv[2]))
-	d.join(hosts)
+	d = Dht()
+	d.join(hosts, int(sys.argv[1]), int(sys.argv[2]))
 
