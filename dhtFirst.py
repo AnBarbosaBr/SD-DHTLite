@@ -288,7 +288,7 @@ class Dht(DhtApi):
 					comando_esperado, comando_esperado, cmd[0]))
 
 	def responsavel_pela_resposta(self, cmd):
-		# TODO: Incompleto
+
 		hash_proprio = self.hash_proprio
 		hash_predecessor = self.hash_de(predecessor[0])
 		hash_sucessor = self.hash_de(sucessor[0])	
@@ -311,6 +311,10 @@ class Dht(DhtApi):
 	def enviaResposta(self, tipo_resp, resposta, ip_solicitante, porta_solicitante):
 		# TODO
 		pass
+
+	def aguardaResposta(self):
+		# TODO
+		pass	
 
 if __name__ == "__main__":
 	#Para executar como main e necessario o seguinte comando
