@@ -60,6 +60,8 @@ class Dht(DhtApi):
 		thread = Thread(target=self.listen)
 		thread.start()
 
+		return self.conectado
+
 	def leave(self):
 		if not self.conectado:
 			return "Nao conectado ainda"
