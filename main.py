@@ -44,7 +44,7 @@ def dc():
 	## Incluindo chamado à API.
 	dhtRepo.leave()
 	#metodo de desconectar do node
-	return "Desconectado"
+	return render_template('home.html', conectado=False)
 
 @app.route("/add", methods=['GET','POST'])
 def add():
