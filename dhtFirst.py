@@ -300,7 +300,7 @@ class Dht(DhtApi):
 
 		if not predecessor_menor_que_self: 
 			# deu a volta
-			return chave_menor_que_self
+			return chave_maior_que_antecessor
 		else:
 			return chave_maior_que_antecessor and chave_menor_que_self
 
