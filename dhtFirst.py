@@ -294,9 +294,16 @@ class Dht(DhtApi):
 		hash_sucessor = self.hash_de(sucessor[0])	
 		hash_chave = self.hash_de(cmd[1])
 		
-		condicao_predecessor_menor_que_self = hash_predecessor < hash_proprio
-		condicao_chave_menor_que_self = hash_chave < hash_proprio
-		condicao_chave_maior_que_antecessor = hash_chave > hash_antecessor
+		predecessor_menor_que_self = hash_predecessor < hash_proprio
+		chave_menor_que_self = hash_chave < hash_proprio
+		chave_maior_que_antecessor = hash_chave > hash_antecessor
+
+		if not predecessor_menor_que_self: 
+			# deu a volta
+			return chave_menor_que_self
+		else:
+			return chave_maior_que_antecessor and chave_menor_que_self
+
 
 	def encaminhaSucessor(self, cmd):
 		# TODO
@@ -304,7 +311,7 @@ class Dht(DhtApi):
 	def enviaResposta(self, tipo_resp, resposta, ip_solicitante, porta_solicitante):
 		# TODO
 		pass
-		
+
 if __name__ == "__main__":
 	#Para executar como main e necessario o seguinte comando
 	#python dhtfirst.py [porta] [id]
