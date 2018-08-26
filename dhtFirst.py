@@ -12,8 +12,8 @@ class Dht(DhtApi):
 		self.id = id_this
 		self.sucessor = None
 		self.predecessor = None
-		self.sendSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.recvSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sendSocket = socket.socket()
+		self.recvSocket = socket.socket()
 		self.recvSocket.bind((self.addr, self.port))
 
 	def join(self, listaDePossiveisHosts):
@@ -57,8 +57,8 @@ class Dht(DhtApi):
 			self.sucessor = self.predecessor = thisNode
 
 		self.conectado = True
-		self.listen()
-		self.recvSocket.close()
+		thread = Thread(target=self.listen)
+		thread.start()
 
 	def leave(self):
 		if not self.conectado:
@@ -77,80 +77,69 @@ class Dht(DhtApi):
 																			 self.sucessor[2])
 			self.sendSocket.send(msg.encode())
 			self.sendSocket.close()
+			self.recvSocket.close()
 
 		except Exception as err:
 			print(err)
-
-	def recvThread(self, conn):
-		while 1:
-			data = conn.recv(1024)
-			if data:
-				cmd = data.decode().split(" ")
-
-				if cmd[0] == "JOIN":
-					id_new = int(cmd[1])
-					ip_new = cmd[2]
-					port_new = int(cmd[3])
-
-					if self.id < id_new and self.predecessor[0] < self.id:
-						self.sendSocket.connect((self.sucessor[1], self.sucessor[2]))
-						msg = "JOIN {} {} {} \n".format(id_new,
-																				 		ip_new,
-																				 		port_new)
-						self.sendSocket.send(msg.encode())
-						self.sendSocket.close()
-
-					else:
-						self.sendSocket.connect((ip_new, port_new))
-						msg = "JOIN_OK {} {} {} {} {} {}".format(self.id, 
-																	  self.addr,
-																	  self.port,
-																	  self.predecessor[0],
-																	  self.predecessor[1],
-																	  self.predecessor[2])
-						print(msg)
-						self.sendSocket.send(msg.encode())
-						self.sendSocket.close()
-
-
-				elif cmd[0] == "NEW_NODE" or "NODE_GONE":
-					id_new = int(cmd[1])
-					ip_new = cmd[2]
-					port_new = int(cmd[3])
-
-					self.sucessor = (id_new, ip_new, port_new)
-
-				elif cmd[0] == "LEAVE":
-					id_new = int(cmd[1])
-					ip_new = cmd[2]
-					port_new = int(cmd[3])
-
-					self.predecessor = (id_new, ip_new, port_new)
-
-				elif cmd[0] == "STOP":
-					break
-
-				else:
-					print(cmd)
-			
-			else:
-				break
-
-		conn.close() 
 
 	def listen(self):
 		self.recvSocket.listen()
 		stop = False
 		while not stop:
 			try:
-				print("here")
 				conn, addr = self.recvSocket.accept()
-				thread = Thread(target=self.recvThread, 
-												args=(conn,))
-				thread.start()
-					
+				with conn:
+					data = conn.recv(1024)
+					if data:
+						cmd = data.decode().split(" ")
 
-			except Exception as err:
+						if cmd[0] == "JOIN":
+							id_new = int(cmd[1])
+							ip_new = cmd[2]
+							port_new = int(cmd[3])
+
+							if self.id < id_new and self.predecessor[0] < self.id:
+								self.sendSocket.connect((self.sucessor[1], self.sucessor[2]))
+								msg = "JOIN {} {} {} \n".format(id_new,
+																						 		ip_new,
+																						 		port_new)
+								self.sendSocket.send(msg.encode())
+								self.sendSocket.close()
+
+							else:
+								self.sendSocket.connect((ip_new, port_new))
+								msg = "JOIN_OK {} {} {} {} {} {}".format(self.id, 
+																			  self.addr,
+																			  self.port,
+																			  self.predecessor[0],
+																			  self.predecessor[1],
+																			  self.predecessor[2])
+								print(msg)
+								self.sendSocket.send(msg.encode())
+								self.sendSocket.close()
+
+
+						elif cmd[0] == "NEW_NODE" or "NODE_GONE":
+							id_new = int(cmd[1])
+							ip_new = cmd[2]
+							port_new = int(cmd[3])
+
+							self.sucessor = (id_new, ip_new, port_new)
+
+						elif cmd[0] == "LEAVE":
+							id_new = int(cmd[1])
+							ip_new = cmd[2]
+							port_new = int(cmd[3])
+
+							self.predecessor = (id_new, ip_new, port_new)
+
+						elif cmd[0] == "STOP":
+							stop = True	
+
+						else:
+							print(cmd)
+
+			except ValueError as err:
 				stop = True
 				print(err)
 
