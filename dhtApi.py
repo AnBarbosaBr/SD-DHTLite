@@ -1,27 +1,33 @@
-
+# coding:utf-8
 import abc
+import hashlib
 
-class DhtApi(object, metaclass=abc.ABCMeta):
 
-	
-	@abc.abstractmethod
+class DhtApi(object):
+
+	def hash_de(self, chave):
+		"""
+		Converte a chave dada num hash sha1, utiliza apenas os primeiros 5
+		valores e converte o hexadecimal restante num int. Dispersão do Hash: 16^5
+		"""
+		print("Recebendo chave {}\n".format(chave))
+		hash_longo = hashlib.sha1(str(chave).encode('utf-8')).hexdigest()
+		hash_curto = hash_longo[:5]
+		return int(hash_curto, 16)
+
 	def join(self, listaDePossiveisHosts):
 		pass
 		
-	@abc.abstractmethod
 	def leave(self):
 		pass
 		
 		
-	@abc.abstractmethod
 	def store(self, chave, valor):
 		pass
 	
-	@abc.abstractmethod
 	def retrieve(self, chave):
 		pass
 		
-	@abc.abstractmethod
 	def remove(self, chave):
 		pass	
 		
@@ -80,3 +86,26 @@ class FakeApi(DhtApi):
 			if not isinstance(endereco[1], int):
 				return False;
 		return True;		
+
+
+
+class ArmazenamentoLocal(object):	
+	
+	def __init__(self):
+		self.usuarios = {}
+
+	def store(self, chave, valor):
+		self.usuarios[chave] = valor
+			
+	def retrieve(self, chave):
+		if(len(self.usuarios)>0):
+			return self.usuarios[chave];
+		else:
+			return None;
+		
+	def remove(self, chave):
+		if chave not in self.usuarios:
+			return False;
+		else:
+			del self.usuarios[chave]
+			return True;
