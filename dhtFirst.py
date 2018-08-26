@@ -50,7 +50,7 @@ class Dht(DhtApi):
 																		  self.port)
 				self.sendSocket.send(msg.encode())
 				self.sendSocket.close()
-				print("Here", sucessor, predecessor)
+				print("Here", self.sucessor, self.predecessor)
 
 		else:
 			thisNode = (self.id, self.addr, self.port)
