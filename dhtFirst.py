@@ -19,7 +19,6 @@ class Dht(DhtApi):
 	def join(self, listaDePossiveisHosts):
 		found = False
 		for host in listaDePossiveisHosts:
-			currentH = host
 			try:
 				self.sendSocket.connect(host)
 				msg = "JOIN {} {} {} \n".format(self.id,
