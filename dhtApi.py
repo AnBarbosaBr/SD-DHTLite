@@ -3,6 +3,7 @@ import abc
 
 class DhtApi(object, metaclass=abc.ABCMeta):
 
+	
 	@abc.abstractmethod
 	def join(self, listaDePossiveisHosts):
 		pass
@@ -30,13 +31,15 @@ class FakeApi(DhtApi):
 	def __init__(self):
 		self.usuarios = {};
 		self.conectado = False;
+		self.sucessor = None;
+		self.predecessor = None;
 		
 	def join(self, listaDePossiveisHosts):
-		if(len(listaDePossiveisHosts)>0):
+		if(self.__enderecos_validos(listaDePossiveisHosts)):
 			self.conectado = True;
-			return True;
 		else:
-			return False;
+			self.conectado = False;
+		return self.conectado;
 	
 	def leave(self):
 		self.usuarios  = {};
@@ -56,7 +59,7 @@ class FakeApi(DhtApi):
 			else:
 				return None;
 		else:
-			raise Excetion("Você não está conectado.");
+			raise Exception("Você não está conectado.");
 	
 	def remove(self, chave):
 		if chave not in self.usuarios:
@@ -65,4 +68,15 @@ class FakeApi(DhtApi):
 			del self.usuarios[chave]
 			return True;
 
-	
+	def __enderecos_validos(self, lista_de_enderecos):
+		if len(lista_de_enderecos) == 0:
+			return False;
+		
+		for endereco in lista_de_enderecos:
+			if not isinstance(endereco, tuple):
+				return False;
+			if not isinstance(endereco[0], str):
+				return False;
+			if not isinstance(endereco[1], int):
+				return False;
+		return True;		

@@ -1,10 +1,13 @@
 <h4>Conecte-se a A Rede</h4> 
-<form action="/connect">
+<form action="/connect", method="post">
     <div class="form-group">
-        <label for="conAdress">Endereço:</label>
-        <input type="text" class="form-control" id="usuario"
-            aria-describedby="connectHelp" placeholder="Endereço">
-        <small id="connectHelp" class="form-text text-muted">Endereço conhecido n´A Rede.</small>
+        <label for="conAdress">Endereço IP:</label>
+        <input type="text" class="form-control" id="ip" name="ip" aria-describedby="connectHelpEnd" placeholder="127.0.0.1">
+        <small id="connectHelpEnd" class="form-text text-muted">Endereço IP conhecido n´A Rede, ex: 127.0.0.1.</small>
+        <br>
+        <label>Porta:</label>
+        <input type="text" class="form-control" id="port" name="port" aria-describedby="connectHelpPorta" placeholder="40001">
+        <small id="connectHelpPorta" class="form-text text-muted">Inteiro, sem pontos. Ex 40001.</small>
     </div>
 
     <button>Conectar-se à rede.</button>
