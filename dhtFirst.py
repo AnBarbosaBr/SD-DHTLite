@@ -1,15 +1,15 @@
-from dhtApi import DhtApi, ArmazenamentoLocal
-from threading import Thread
-import time
-import sys
 import socket
+import sys
+import time
+from threading import Thread
+
+from dhtApi import ArmazenamentoLocal, DhtApi
+
 
 class Dht(DhtApi):
-	def __init__(self, port, id_this):
+	def __init__(self):
 		self.conectado = False
 		self.addr = '127.0.0.1'
-		self.port = port
-		self.id = id_this
 		self.sucessor = None
 		self.predecessor = None
 		self.sendSocket = socket.socket()
@@ -21,8 +21,12 @@ class Dht(DhtApi):
 		self.hash_proprio = self.hash_de(id)
 		self.hash_sucessor = None
 		self.hash_predecessor = None
+		
 
-	def join(self, listaDePossiveisHosts):
+	def join(self, listaDePossiveisHosts, port, id_this):
+		self.port = port
+		self.id = id_this
+		self.recvSocket.bind((self.addr, self.port))
 		#Inicio do join, checa a lista dos possíveis hosts e conecta no primeiro que conseguir 
 		found = False
 		for host in listaDePossiveisHosts:
@@ -94,9 +98,9 @@ class Dht(DhtApi):
 			#predecessor para atualizacao
 			self.sendSocket = socket.socket()
 			self.sendSocket.connect((self.sucessor[1], self.sucessor[2]))
-			msg = "LEAVE {} {} {} \n".format(self.predecessor[0][0],
-																			 self.predecessor[0][1],
-																			 self.predecessor[0][2])
+			msg = "LEAVE {} {} {} \n".format(self.predecessor[0],
+																			 self.predecessor[1],
+																			 self.predecessor[2])
 			self.sendSocket.send(msg.encode())
 			self.sendSocket.close()
 
@@ -193,7 +197,7 @@ class Dht(DhtApi):
 					stop = True	
 
 				else:
-					print(cmd)
+					self.process_other_messages(cmd, conn)
 
 				print("Meu predecessor: ", self.predecessor, " Meu sucessor: ", self.sucessor)
 
@@ -215,7 +219,7 @@ class Dht(DhtApi):
 
 		# ???
 		elif cmd[0] == "TRANSFER":
-		self.processTRANSFER(cmd)
+			self.processTRANSFER(cmd)
 
 		# Remove um elemento da lista. A mensagem é encaminhada até
 		# o responsável, que responderá diretamente ao solicitante.
@@ -232,10 +236,78 @@ class Dht(DhtApi):
 		pass	
 
 
+	# FUNCOES DE PROCESSO
+	def def processSTORE(self, cmd):
+		self.assert_comando(cmd, "STORE")
+		chave_a_armazenar = cmd[1]
+		valor_a_armazenar = cmd[2]
+
+		if self.responsavel_pela_resposta(cmd):
+			self.armazenamento.store(chave_a_armazenar, valor_a_armazenar)
+			# Temos que avisar o solicitante que o armazenamento ocorreu?
+
+	def processRETRIEVE(self, cmd):
+		self.assert_comando(cmd, "RETRIEVE")
+		
+		if self.responsavel_pela_resposta(cmd):
+			chave_a_recuperar = cmd[1]
+			ip_solicitante = cmd[2]
+			porta_solicitante = cmd[3]
+			
+			resposta = self.armazenamento.retrieve(chave_a_recuperar)
+
+
+			enviaResposta("OK", resposta, ip_solicitante, porta_solicitante)
+		else:
+			self.encaminhaSucessor(cmd)
+
+	def processREMOVE(self, cmd):
+		self.assert_comando(cmd, "REMOVE")
+		
+		if self.responsavel_pela_resposta(cmd):
+			chave_a_remover = cmd[1]
+			self.armazenamento.remove(chave_a_remover);		
+		else:
+			self.encaminhaSucessor(cmd)
+
+	def processTRANSFER(self, cmd):
+		# TODO: TERMINAR ESSA FUNACO
+		self.assert_comando(cmd, "TRANSFER")	
+
+		if self.responsavel_pela_resposta(cmd):
+			# EXECUTAR LOGICA
+
+		else: 
+			self.encaminhaSucessor(cmd)	
+	# FUNCOES AUXILIARES
+
+	def assert_comando(self, cmd, esperado):
+		if not (cmd[0] == comando_esperado):
+			raise Exception(
+				"Process {} deve receber um cmd '{}', foi recebido {}\n".format(
+					comando_esperado, comando_esperado, cmd[0]))
+
+	def responsavel_pela_resposta(self, cmd):
+		# TODO: Incompleto
+		hash_proprio = self.hash_proprio
+		hash_predecessor = self.hash_de(predecessor[0])
+		hash_sucessor = self.hash_de(sucessor[0])	
+		hash_chave = self.hash_de(cmd[1])
+		
+		condicao_predecessor_menor_que_self = hash_predecessor < hash_proprio
+		condicao_chave_menor_que_self = hash_chave < hash_proprio
+		condicao_chave_maior_que_antecessor = hash_chave > hash_antecessor
+
+	def encaminhaSucessor(self, cmd):
+		# TODO
+		pass
+	def enviaResposta(self, tipo_resp, resposta, ip_solicitante, porta_solicitante):
+		# TODO
+		pass
+		
 if __name__ == "__main__":
 	#Para executar como main e necessario o seguinte comando
 	#python dhtfirst.py [porta] [id]
 	hosts = [('127.0.0.1', 7001)]
-	d = Dht(int(sys.argv[1]), int(sys.argv[2]))
-	d.join(hosts)
-
+	d = Dht()
+	d.join(hosts, int(sys.argv[1]), int(sys.argv[2]))
