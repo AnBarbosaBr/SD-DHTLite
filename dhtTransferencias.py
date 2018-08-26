@@ -1,6 +1,7 @@
 # coding:utf-8
-from dhtApi import DhtApi, ArmazenamentoLocal
+from dhtApi import DhtApi, ArmazenamentoLocal, Resposta
 from threading import Thread
+import string
 import time
 import sys
 import socket
@@ -136,13 +137,14 @@ class Dht(DhtApi):
 				print(err)
 
 	def store(self, chave, valor):
-		pass
+		self.processSTORE(self.createCommand("STORE", chave, valor))
+
 
 	def retrieve(self, chave):
-		pass
+		self.processRETRIEVE(self.createCommand("RETRIEVE", chave))
 		
 	def remove(self, chave):
-		pass	
+		self.processREMOVE(self.createCommand("REMOVE", chave))
 
 	
 	def processJOIN(self, cmd):	
@@ -223,13 +225,26 @@ class Dht(DhtApi):
 		chave_a_armazenar = cmd[1]
 		valor_a_armazenar = cmd[2]
 
-		if self.encaminharCmdSeNaoForResponsavel(cmd):
-			print("Mensagem encaminhada.")
-		else:
+		if not self.encaminharCmdSeNaoForResponsavel(cmd):
 			self.armazenamento.store(chave_a_armazenar, valor_a_armazenar);
 	
 	def processRETRIEVE(self, cmd):
 		self.rejeitaSeComandoErrado(cmd, "RETRIEVE")
+		chave_a_recuperar = cmd[1]
+		resposta = self.despacharCMD(cmd)
+		if resposta == Resposta.PROCESS_HERE:
+			resposta = self.armazenamento.retrieve(chave_a_recuperar)
+
+		return resposta
+
+	def processREMOVE(self, cmd):
+		self.rejeitaSeComandoErrado(cmd, "REMOVE")
+		chave_a_remover = cmd[1]
+
+		resposta_encaminhada = self.encaminharCmdSeNaoForResponsavel(cmd)
+
+		if not resposta_encaminhada:
+			self.armazenamento.remove(chave_a_remover);
 
 	def processOK(self, cmd):
 		self.rejeitaSeComandoErrado(cmd, "OK")
@@ -237,7 +252,7 @@ class Dht(DhtApi):
 	def processNOT_FOUND(self, cmd):
 		self.rejeitaSeComandoErrado(cmd, "NOT_FOUND")
 
-	def processTRANFER(self, cmd):
+	def processTRANSFER(self, cmd):
 		self.rejeitaSeComandoErrado(cmd, "TRANSFER")
 
 	def responsabilidade_do_predecessor(self, chave):
@@ -308,6 +323,34 @@ class Dht(DhtApi):
 			return False
 		return True
 
+	def despacharCMD(self, cmd):
+		resposta = Resposta.PROCESS_HERE
+		chave = cmd[1]
+		if(self.responsabilidade_do_predecessor(chave)):
+			return self.aguarda_resposta_do_predecessor(cmd)
+		
+		elif(self.responsabilidade_do_sucessor(chave)):
+			return self.aguarda_resposta_do_sucessor(cmd)
+		return resposta	
+
+	def defineReceiver(self, cmd):
+		chave = cmd[1]
+		if(self.responsabilidade_do_predecessor(chave)):
+			return Resposta.PROCESS_PREDECESSOR
+		
+		elif(self.responsabilidade_do_sucessor(chave)):
+			return Resposta.PROCESS_SUCESSOR
+		else:
+			return Resposta.PROCESS_HERE
+
+	def aguarda_resposta_do_predecessor(self, cmd):
+		resposta = self.encaminhaPredecessor(cmd)
+		return resposta
+		
+	def aguarda_resposta_do_sucessor(self, cmd):
+		resposta = self.encaminhaSucessor(cmd)
+		return resposta
+
 	def encaminharCmdSeNaoForResponsavel(self, cmd):
 		"""
 		Encaminha o comando para o antecessor ou para o sucessor, 
@@ -315,17 +358,30 @@ class Dht(DhtApi):
 		Retorna True se houve encaminhamento.
 		Retorna False se não houve encaminhamento.
 		"""
-		if(self.responsabilidade_do_predecessor(chave_a_armazenar)):
+		chave = cmd[1]
+		if(self.responsabilidade_do_predecessor(chave)):
 			self.encaminhaPredecessor(cmd)
 			return True
 		
-		elif(self.responsabilidade_do_sucessor(chave_a_armazenar)):
+		elif(self.responsabilidade_do_sucessor(chave)):
 			self.encaminhaSucessor(cmd)
 			return True
 		
 		return False
+
+	def decodeMessage(self, msg):
+		return msg.decode().split(" ")	
+
+
+	def createMessage(self, m_type, *args):
+		msg = m_type+" "+' '.join(args)+" \n"
+		return msg
+
+	def createCommand(self, m_type, *args):
+		return (m_type, ) + args
+
 		
-			
+
 	def encaminhaSucessor(self, msg):
 		# Conectamos ao sucessor.
 		self.sendSocket.connect((self.sucessor[1], self.sucessor[2]))
@@ -364,7 +420,7 @@ if len(sys.argv) == 3:
 	identificador = int(sys.argv[2])
 
 d = Dht(porta, identificador)
-d.join(hosts)
-
+#d.join(hosts)
+d.createCommand("Andre", 1, 2, 3)
 # d2 = Dht(porta+20, 5147)
 # d2.join([('127.0.0.1', porta)])

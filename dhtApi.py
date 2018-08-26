@@ -1,8 +1,14 @@
 # coding:utf-8
 import abc
 import hashlib
+from enum import Enum
 
+class Resposta(Enum):
+	PROCESS_HERE = 0
+	PROCESS_SUCESSOR = 1
+	PROCESS_PREDECESSOR = 2
 
+	
 class DhtApi(object):
 
 	def hash_de(self, chave):
@@ -15,6 +21,7 @@ class DhtApi(object):
 		hash_curto = hash_longo[:5]
 		return int(hash_curto, 16)
 
+	
 	def join(self, listaDePossiveisHosts):
 		pass
 		

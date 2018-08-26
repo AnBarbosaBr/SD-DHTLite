@@ -1,4 +1,4 @@
-from dhtApi import DhtApi
+from dhtApi import DhtApi, ArmazenamentoLocal
 from threading import Thread
 import time
 import sys
@@ -15,6 +15,12 @@ class Dht(DhtApi):
 		self.sendSocket = socket.socket()
 		self.recvSocket = socket.socket()
 		self.recvSocket.bind((self.addr, self.port))
+		# Armazenamento:
+		self.armazenamento = ArmazenamentoLocal()
+		# Hashes:
+		self.hash_proprio = self.hash_de(id)
+		self.hash_sucessor = None
+		self.hash_predecessor = None
 
 	def join(self, listaDePossiveisHosts):
 		#Inicio do join, checa a lista dos possíveis hosts e conecta no primeiro que conseguir 
@@ -196,6 +202,26 @@ class Dht(DhtApi):
 				print(err)
 		conn.close()
 
+	def process_other_messages(self, cmd, conn):
+		# Ao receber STORE, ele deve armazenar os valores recebidos
+		if cmd[0] == "STORE":	
+			self.processSTORE(cmd)
+		
+		#  Se não for o responsável, deve encaminhar a requisição,
+		# junto com o solicitante, até que o responsável receba.
+		# O responsável responderá diretamente ao requisitante.
+		elif cmd[0] == "RETRIEVE":
+			self.processRETRIEVE(cmd)
+
+		# ???
+		elif cmd[0] == "TRANSFER":
+		self.processTRANSFER(cmd)
+
+		# Remove um elemento da lista. A mensagem é encaminhada até
+		# o responsável, que responderá diretamente ao solicitante.
+		elif cmd[0] == "REMOVE":
+			self.processREMOVE(cmd)	
+																			
 	def store(self, chave, valor):
 		pass
 
@@ -204,6 +230,7 @@ class Dht(DhtApi):
 		
 	def remove(self, chave):
 		pass	
+
 
 if __name__ == "__main__":
 	#Para executar como main e necessario o seguinte comando
