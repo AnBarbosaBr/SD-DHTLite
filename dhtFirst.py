@@ -95,6 +95,9 @@ class Dht(DhtApi):
 			return "Nao conectado ainda"
 
 		try:
+			# Transfere seus itens para seu SUCESSOR:
+			self.transfer_leave() ''' <- Para a execução até a transferencia estar completa '''
+
 			#Mandando mensagem para o seu sucessor com a operacao de saida e o endereco de seu
 			#predecessor para atualizacao
 			self.sendSocket = socket.socket()
@@ -105,8 +108,7 @@ class Dht(DhtApi):
 			self.sendSocket.send(msg.encode())
 			self.sendSocket.close()
 
-			# Transfere seus itens para seu SUCESSOR:
-			self.transfer_leave()
+			
 
 
 			#Mandando mensagem para o seu predecessor com a operacao de saida e o endereco de seu
@@ -180,6 +182,8 @@ class Dht(DhtApi):
 						print("Enviei: ", msg)
 						s.send(msg.encode())
 						self.predecessor = (id_new, ip_new, port_new)
+''' >>>>>>>> '''		self.transfer_novo_predecessor()
+
 
 				#Caso de entrada ou saida de um no, apenas para atualizar 
 				#o predecessor do mesmo
@@ -189,6 +193,7 @@ class Dht(DhtApi):
 					port_new = int(cmd[3])
 
 					self.sucessor = (id_new, ip_new, port_new)
+					
 
 				#Ao receber LEAVE ele atualiza o predecessor
 				elif cmd[0] == "LEAVE":
