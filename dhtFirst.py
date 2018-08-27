@@ -390,7 +390,7 @@ class Dht(DhtApi):
 		
 		predecessor_menor_que_self = hash_predecessor < hash_proprio
 		chave_menor_que_self = hash_chave < hash_proprio
-		chave_maior_que_antecessor = hash_chave > hash_antecessor
+		chave_maior_que_antecessor = hash_chave > hash_predecessor
 
 		if hash_predecessor == hash_proprio and hash_sucessor == hash_proprio:
 			# Só há um nó na rede.

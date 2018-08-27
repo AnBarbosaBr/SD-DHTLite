@@ -13,7 +13,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--port", 
 										help="Server port", 
 										default=9000)
-port = parser.port
+args = parser.parse_args()
+port = args.port
 
 # Criamos uma instância do adaptador da API:
 dhtRepo = dhtApi.FakeApi()
@@ -28,7 +29,7 @@ dht = Dht()
 def root():
 	return render_template('home.html', conectado=conectado)
 
-@app.route("/connect", methods=['GET', 'POST'])
+@app.route("/connect", methods=['POST'])
 def connect():
 	if request.method == 'POST':
 		try:
@@ -73,14 +74,14 @@ def add():
 		
 		
 		#Incluído chamado à API.
-		dhtRepo.store(username, {'nome':name , 'email': email})
-		
+		#dhtRepo.store(username, {'nome':name , 'email': email})
+		dht.store(username,  {'nome':name , 'email': email})
 #   usuarios[username] = {
 #     'nome' : name,
 #     'email': email
 #   }
 #   print(usuarios)
-		print(dhtRepo.usuarios)
+		#print(dhtRepo.usuarios)
 		s_m = ["{} adicionado com sucesso".format(username)]
 
 
@@ -100,7 +101,8 @@ def delete():
 		#del usuarios[username]
 				
 		
-		if not dhtRepo.remove(username):
+	#	if not dhtRepo.remove(username):
+		if not dht.remove(username):
 			raise Exception("Nome de usuario não cadastrado") 
 		
 		s_m = ["{} apagado com sucesso".format(username)]
@@ -115,7 +117,8 @@ def search():
 		username = request.form['usuario']
 		
 #   if username not in usuarios:
-		usuarioEncontrado = dhtRepo.retrieve(username)
+		#usuarioEncontrado = dhtRepo.retrieve(username)
+		usuarioEncontrado = dht.retrieve(username)
 		if not usuarioEncontrado:
 			raise Exception("Nome de usuario não cadastrado")
 		#name = usuarios[username]['nome']
