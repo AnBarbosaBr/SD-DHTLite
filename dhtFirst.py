@@ -1,3 +1,4 @@
+# coding=utf-8
 import socket
 import sys
 import time
@@ -5,7 +6,6 @@ from threading import Thread
 import copy
 import random
 from dhtApi import ArmazenamentoLocal, DhtApi
-import re
 
 
 class Dht(DhtApi):
@@ -21,8 +21,9 @@ class Dht(DhtApi):
 		# Armazenamento:
 		self.armazenamento = ArmazenamentoLocal()
 		# Hashes:
-		self.hash_proprio = self.hash_de(self.id)
-		self.resposta_assincrona = None
+		self.hash_proprio = self.hash_de(id)
+		self.hash_sucessor = None
+		self.hash_predecessor = None
 		
 	def get_id(self, n):
 		num = -1
@@ -34,15 +35,25 @@ class Dht(DhtApi):
 		current_nums = [] 
 		with open("nums.txt", "r") as r:
 			for line in r:
-				current_nums.append(int(line))
+				current_nums.append(int(line.strip("\n")))
 		aux = random.getrandbits(n)
 		while num == -1:
 			if aux in current_nums:
 				aux = random.getrandbits(n)
 			else:
 				with open("nums.txt", "a+") as w:
-					w.write(str(aux))
+					w.write(str(aux)+'\n')
 				return aux
+
+	def remove_number(self):
+		current_nums = [] 
+		with open("nums.txt", "r") as r:
+			for line in r:
+				current_nums.append(int(line.strip("\n")))
+		current_nums.remove(self.id)
+		with open("nums.txt", "w") as w:
+			for n in current_nums:
+				w.write(str(n)+'\n')
 
 	def join(self, listaDePossiveisHosts, port):
 		self.port = port
@@ -59,11 +70,12 @@ class Dht(DhtApi):
 																		 		self.addr,
 																		 		self.port)
 				self.sendSocket.send(msg.encode())
+				print("Mandei isso: ", msg.replace("\n", ""))
 				found = True
 				self.sendSocket.close()
 				break
 			except ConnectionRefusedError as conerr:
-				print(conerr)
+				print("Nao foi possivel conectar no endereco: {} {}".format(host[0], host[1]))
 
 		#Se conseguir significa que ja existe a dht, então precisa se comunicar para entrar
 		if found:
@@ -94,10 +106,11 @@ class Dht(DhtApi):
 				
 
 		else:
+			print("Criando nova DHT")
 			#Caso seja o primeiro elemento, seu sucessor e predecessor e ele mesmo
 			thisNode = (self.id, self.addr, self.port)
 			self.sucessor = self.predecessor = thisNode
-
+		print("Meu ID é: ", self.id)
 		#Apos tudo esta conectado na rede
 		self.conectado = True
 
@@ -118,7 +131,7 @@ class Dht(DhtApi):
 
 		try:
 			# Transfere seus itens para seu SUCESSOR:
-			self.transfer_leave() # <- Para a execução até a transferencia estar completa 
+			#self.transfer_leave() # <- Para a execução até a transferencia estar completa 
 
 			#Mandando mensagem para o seu sucessor com a operacao de saida e o endereco de seu
 			#predecessor para atualizacao
@@ -129,9 +142,7 @@ class Dht(DhtApi):
 																			 self.predecessor[2])
 			self.sendSocket.send(msg.encode())
 			self.sendSocket.close()
-
-			
-
+			print("Mandei isso: ", msg.replace("\n", ""))
 
 			#Mandando mensagem para o seu predecessor com a operacao de saida e o endereco de seu
 			#sucessor para atualizacao
@@ -144,11 +155,13 @@ class Dht(DhtApi):
 			
 			self.sendSocket.send(msg.encode())
 			self.sendSocket.close()
+			print("Mandei isso: ", msg.replace("\n", ""))
 			self.recvSocket.close()
+			self.conectado = False
+			self.remove_number()
 
 		except Exception as err:
 			print(err)
-		self.conectado=False;	
 
 	def listen(self):
 		#Handler de novas conexoes, ao receber uma requisicao ele cria uma nova thread
@@ -161,9 +174,8 @@ class Dht(DhtApi):
 				thread = Thread(target=self.listening_new, args=(conn,))
 				thread.start()
 					
-			except ValueError as err:
+			except Exception as err:
 				stop = True
-				print(err)
 
 	def listening_new(self, conn):
 		#Funcionamento da subthread para tratamento da requisicao recebida
@@ -172,8 +184,15 @@ class Dht(DhtApi):
 				data = conn.recv(1024)
 				if not data:
 					break
-				cmd = self.transforma(data.decode())
+				cmd = data.decode().split(" ")
 				print("Recebi: ", cmd)
+
+				if cmd[0] == "LEAVE":
+					id_new = int(cmd[1])
+					ip_new = cmd[2]
+					port_new = int(cmd[3])
+					print("AA")
+					self.predecessor = (id_new, ip_new, port_new)
 
 				#Se o comando recebido for JOIN, checar a posicao devida na rede
 				if cmd[0] == "JOIN":
@@ -184,11 +203,7 @@ class Dht(DhtApi):
 
 					#Checando se deve passar ou nao a requisicao do novo no para frente na rede
 					#Se nao estiver na posicao certa, e enviado para seu sucessor
-	
-					#if self.id < id_new and self.predecessor[0] < self.id:
-					if self.id == id_new:
-						raise Exception("IDs repetidos. Inicie o servidor novamente.")
-					if not self.responsavel_pela_chave(id_new):
+					if self.id < id_new and self.predecessor[0] < self.id:
 						s.connect((self.sucessor[1], self.sucessor[2]))
 						msg = "JOIN {} {} {} \n".format(id_new,
 																				 		ip_new,
@@ -216,7 +231,7 @@ class Dht(DhtApi):
 
 				#Caso de entrada ou saida de um no, apenas para atualizar 
 				#o predecessor do mesmo
-				elif cmd[0] == "NEW_NODE" or cmd[0]=="NODE_GONE":
+				elif cmd[0] == "NEW_NODE" or "NODE_GONE":
 					id_new = int(cmd[1])
 					ip_new = cmd[2]
 					port_new = int(cmd[3])
@@ -225,19 +240,16 @@ class Dht(DhtApi):
 					
 
 				#Ao receber LEAVE ele atualiza o predecessor
-				elif cmd[0] == "LEAVE":
-					id_new = int(cmd[1])
-					ip_new = cmd[2]
-					port_new = int(cmd[3])
 
-					self.predecessor = (id_new, ip_new, port_new)
+
 
 				#Comando de teste
 				elif cmd[0] == "STOP":
 					stop = True	
 
 				else:
-					self.process_other_messages(cmd, conn)
+					if not cmd[0] == "LEAVE":
+						self.process_other_messages(cmd, conn)
 
 				print("Meu predecessor: ", self.predecessor, " Meu sucessor: ", self.sucessor)
 
@@ -267,14 +279,9 @@ class Dht(DhtApi):
 		# o responsável, que responderá diretamente ao solicitante.
 		elif cmd[0] == "REMOVE":
 			self.processREMOVE(cmd)	
-		
-		elif cmd[0]== "OK":
-			self.processOK(cmd)
 
 
 	def store(self, chave, valor):
-		if not self.conectado:
-			raise Exception("Você ainda não está conectado. Conecte-se antes de realizar qualquer ação.")
 		if self.responsavel_pela_chave(chave):
 			self.armazenamento.store(chave, valor)
 		else:
@@ -285,8 +292,6 @@ class Dht(DhtApi):
 				raise Exception("Erro ao adicionar valor: "+resposta[1])
 	
 	def retrieve(self, chave):
-		if not self.conectado:
-			raise Exception("Você ainda não está conectado. Conecte-se antes de realizar qualquer ação.")
 		if self.responsavel_pela_chave(chave):
 			return self.armazenamento.retrieve(chave)
 		else:
@@ -300,9 +305,6 @@ class Dht(DhtApi):
 				return resposta[1]
 
 	def remove(self, chave):
-		if not self.conectado:
-			raise Exception("Você ainda não está conectado. Conecte-se antes de realizar qualquer ação.")
-
 		if self.responsavel_pela_chave(chave):
 			return self.armazenamento.remove(chave)
 		else:
@@ -334,7 +336,7 @@ class Dht(DhtApi):
 		itens_a_enviar = copy.deepcopy(self.armazenamento.usuarios)
 		for chave, valor in itens_a_enviar:
 			hash_chave = self.hash_de(chave)
-			hash_antecessor = self.hash_de(self.predecessor[0])
+			hash_antecessor = self.hash_de(predecessor[0])
 			
 			if (hash_chave < hash_antecessor):	
 				comando = ("TRANSFER", chave, valor, self.addr, self.port)
@@ -352,7 +354,7 @@ class Dht(DhtApi):
 		
 		if self.responsavel_pela_resposta(cmd):
 			chave_a_armazenar = cmd[1]
-			valor_a_armazenar = eval(cmd[2])
+			valor_a_armazenar = cmd[2]
 			ip_solicitante = cmd[3]
 			porta_solicitante = cmd[4]
 			resposta = self.armazenamento.store(chave_a_armazenar, valor_a_armazenar)
@@ -397,7 +399,7 @@ class Dht(DhtApi):
 		valor_a_armazenar = cmd[2]
 		ip_solicitante = cmd[3]
 		porta_solicitante = cmd[4]
-		self.armazenamento.store(chave_a_armazenar, valor_a_armazenar)
+		self.armazenamento.store(chave_a_armazenar, valor_a_armazenar);
 		self.enviaResposta("TRANSFER_OK", chave_a_armazenar, ip_solicitante, porta_solicitante)
 		
 	def processTRANSFER_OK(self, cmd):
@@ -406,10 +408,6 @@ class Dht(DhtApi):
 		# pela chave.
 		self.assert_comando(cmd[0], "TRANSFER_OK")	
 		self.armazenamento.remove(cmd[1])
-
-	def processOK(self, cmd):
-		self.assert_comando(cmd[0], "OK")
-		self.resposta_assincrona = copy.deepcopy(cmd[1])
 
 		
 	
@@ -430,7 +428,7 @@ class Dht(DhtApi):
 		
 		predecessor_menor_que_self = hash_predecessor < hash_proprio
 		chave_menor_que_self = hash_chave < hash_proprio
-		chave_maior_que_antecessor = hash_chave > hash_predecessor
+		chave_maior_que_antecessor = hash_chave > hash_antecessor
 
 		if hash_predecessor == hash_proprio and hash_sucessor == hash_proprio:
 			# Só há um nó na rede.
@@ -445,10 +443,8 @@ class Dht(DhtApi):
 		return self.responsavel_pela_chave(cmd[1])
 
 	def encaminhaSucessor(self, cmd):
-		lista = list(cmd)
-		msg = ' '.join(str(i) for i in lista)+" \n"
-		print("Encaminhando: {}\n".format(msg))
-		
+		msg = ' '.join(cmd)+" \n"
+		#TODO: Enviar para o sucessor.
 		try:
 			self.sendSocket = socket.socket()
 			self.sendSocket.connect((self.sucessor[1], self.sucessor[2]))
@@ -462,12 +458,10 @@ class Dht(DhtApi):
 
 	def enviaResposta(self, tipo_resp, conteudo, ip_solicitante, porta_solicitante):
 		msg = (tipo_resp, conteudo)
-		lista = list(msg)
-		msg = ' '.join(str(i) for i in lista)+" \n"
-
+		# TODO: Enviar para ip_solicitante, porta_solicitante.
 		try:
 			self.sendSocket = socket.socket()
-			self.sendSocket.connect((ip_solicitante, int(porta_solicitante)))
+			self.sendSocket.connect((ip_solicitante, porta_solicitante))
 			self.sendSocket.send(msg.encode())
 			self.sendSocket.close()
 		except Exception as err:
@@ -476,7 +470,7 @@ class Dht(DhtApi):
 			else:
 				error_msg = "Não foi possível encaminhar uma resposta ao sucessor de {}\n".format(id)
 				self.enviaResposta("ERROR", error_msg, ip_solicitante, porta_solicitante)
-		return msg.encode()
+		return msg
 		
 
 	def aguardaResposta(self):
@@ -495,45 +489,9 @@ class Dht(DhtApi):
 		# 	 		3.1) enviará uma mensagem ao sucessor 
 		# 			3.2) aguardará a resposta
 		#	4) Ao receber a resposta, irá retornar, main.py receberá as informações e exibirá no navegador.
-		while not self.resposta_assincrona:
-			time.sleep(0.01)
-		resposta = copy.deepcopy(self.resposta_assincrona)
-		self.resposta_assincrona = None
-		return resposta
+
+		return reposta
 	
-	def transforma(self, texto):
-		print("Decodificando: {}".format(texto))
-		cmd = texto.split(" ")
-		tipo = cmd[0]
-		if (tipo=="JOIN" or tipo=="JOIN_OK" or tipo=="LEAVE" or tipo=="NODE_GONE" or
-			tipo=="NEW_NODE"):
-			return cmd
-
-		elif (tipo=="REMOVE" or tipo=="RETRIEVE"):
-			return cmd
-
-		elif(tipo=="STORE" or tipo=="TRANSFER" or tipo=="TRANSFER_OK"):
-			
-			resposta = (cmd[0],)
-			dados_usuario = re.split("({.*?})",texto)[1]
-			chave = cmd[1]
-			endereco = re.split("({.*?})",texto)[2].split(" ")
-			ip = endereco[1]
-			porta = endereco[2]
-
-			return resposta + (chave, dados_usuario, ip, porta)
-			
-		elif(tipo=="OK"):
-			resposta = (cmd[0],)
-			dados_usuario = re.split("({.*?})",texto)[1]
-			endereco = re.split("({.*?})",texto)[2].split(" ")
-			ip = endereco[1]
-			porta = endereco[2]
-
-			return resposta + (dados_usuario, ip, porta)
-		
-		
-
 	def obtem_solicitante(self, cmd):
 		if cmd[0]=="STORE" or cmd[0]=="TRANSFER":
 			return (cmd[3], cmd[4])
@@ -548,10 +506,5 @@ if __name__ == "__main__":
 	#python dhtfirst.py [porta] [id]
 	hosts = [('127.0.0.1', 7001)]
 	d = Dht()
-	#d.join(hosts, int(sys.argv[1]), int(sys.argv[2]))
-	personagem = { 'nome': "Andre Barbosa", 'email': "seupera@hotmail.com"}
-	stub = ('STORE', 'David', personagem, '127.0.0.1', 4521)
-	lista = list(stub)
-	msg = ' '.join(str(i) for i in lista)+" \n"
+	d.join(hosts, int(sys.argv[1]), int(sys.argv[2]))
 
-	print(d.transforma(msg))
