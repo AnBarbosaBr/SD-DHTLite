@@ -184,7 +184,7 @@ class Dht(DhtApi):
 				data = conn.recv(1024)
 				if not data:
 					break
-				cmd = data.decode().split(" ")
+				cmd = self.decode_mensagem_recebida(data.decode())
 				print("Recebi: ", cmd)
 
 				if cmd[0] == "LEAVE":
@@ -328,8 +328,8 @@ class Dht(DhtApi):
 			self.encaminhaSucessor(comando)
 		del itens_a_enviar
 		# Aguarda remover o ultimo item do armazenamento
-		while(len(self.armazenamento.usuarios) > 0):
-			time.sleep(0.01)
+		# while(len(self.armazenamento.usuarios) > 0):
+			# time.sleep(0.01)
 
 	def transfer_novo_predecessor(self):
 		# Verifica quais itens armazenados devem ser transferidos para
@@ -473,7 +473,37 @@ class Dht(DhtApi):
 				self.enviaResposta("ERROR", error_msg, ip_solicitante, porta_solicitante)
 		return msg
 		
+	def decode_mensagem_recebida(self, texto):
+		#print("Decodificando: {}".format(texto))
+		cmd = texto.split(" ")
+		tipo = cmd[0]
+		if (tipo=="JOIN" or tipo=="JOIN_OK" or tipo=="LEAVE" or tipo=="NODE_GONE" or
+			tipo=="NEW_NODE"):
+			return cmd
 
+		elif (tipo=="REMOVE" or tipo=="RETRIEVE"):
+			return cmd
+
+		elif(tipo=="STORE" or tipo=="TRANSFER" or tipo=="TRANSFER_OK"):
+			
+			resposta = (cmd[0],)
+			dados_usuario = re.split("({.*?})",texto)[1]
+			chave = cmd[1]
+			endereco = re.split("({.*?})",texto)[2].split(" ")
+			ip = endereco[1]
+			porta = endereco[2]
+
+			return resposta + (chave, dados_usuario, ip, porta)
+			
+		elif(tipo=="OK"):
+			resposta = (cmd[0],)
+			dados_usuario = re.split("({.*?})",texto)[1]
+			endereco = re.split("({.*?})",texto)[2].split(" ")
+			ip = endereco[1]
+			porta = endereco[2]
+			return resposta + (dados_usuario, ip, porta)
+		return ("ERRO", "Não foi possível interpretar a mensagem recebida.")
+		
 	def aguardaResposta(self):
 		#TODO: Aguarda resposta
 		# resposta = ...(algo recebido pela rede, no formato acima: tupla (tipo, conteudo)
