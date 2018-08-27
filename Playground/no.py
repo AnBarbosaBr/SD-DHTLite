@@ -14,15 +14,16 @@ class No(object):
         raise NotImplementedError
         
     def SendMessageAntecessor(self, type, id, endereco):
+        pass
     def SendMessageSucessor(self, type, id, endereco):
         raise NotImplementedError
     def ProcessJoin(self, idEntrando, enderecoEntrando):
         if(idEntrando > self.antecessor.identifcador and idEntrando < self.identifcador):
             self.SendMessageAntecessor("ChangeSucessor" ,idEntrando, enderecoEntrando) # A ordem importa
             self.ChangeAntecessor(idEntrando, enderecoEntrando) # A ordem importa. 
-        else if(idEntrando > self.identificador):
+        elif(idEntrando > self.identificador):
             self.SendMessageSucessor("ProcessJoin", idEntrando, enderecoEntrando)
-        else if (idEntrando < self.identificador):
+        elif (idEntrando < self.identificador):
             self.SendMessageAntecessor("ProcessJoin", idEntrando, enderecoEntrando)
 
     def ProcessChangeAntecedor(self, idEntrando, enderecoEntrando):

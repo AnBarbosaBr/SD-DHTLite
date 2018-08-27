@@ -13,32 +13,37 @@ dhtRepo = dhtApi.FakeApi()
 dhtRepo.join(["endereco ficticio de servidor 1", "end fic 2", "end fic 3"])
 
 usuarios = {}
+conectado = False
 
 dht = Dht()
 
 @app.route("/", methods=['GET'])
 def root():
-	return render_template('home.html', conectado=False)
+	return render_template('home.html', conectado=conectado)
 
 @app.route("/connect", methods=['GET', 'POST'])
 def connect():
 	if request.method == 'POST':
 		try:
+			dht.conectado = False
 			ip = request.form['ip']
 			port = request.form['port']
-			print(ip, port)
+			id_ = request.form['id']
+			print(ip, port, id_)
 			hosts = [('127.0.0.1', 7001)]
 			
 			## Incluindo chamado à API.
-			dht.join(hosts, int(port), int(ip))
+			dht.join(hosts, int(port), int(id_))
+			dhtRepo.join([str(ip)+str(port)])
+			conectado = True
 			#conectar com o node do ip e port indicados
 			#else
 			#conectar com o endereço default
 			return render_template('home.html', conectado=True, 
-																			endereco_next_node="ds",
-																			endereco_previous_node="da")
+																			ip=ip,
+																			porta=port)
 
-		except Exception as err:
+		except ValueError as err:
 			print(err)
 			return render_template('home.html', conectado=False)
 		
@@ -47,8 +52,10 @@ def connect():
 def dc():
 	## Incluindo chamado à API.
 	dht.leave()
+	dhtRepo.leave()
 	#metodo de desconectar do node
-	return render_template('home.html', conectado=False)
+	conectado = False
+	return render_template('home.html', conectado=conectado)
 
 @app.route("/add", methods=['GET','POST'])
 def add():

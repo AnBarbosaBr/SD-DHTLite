@@ -15,7 +15,6 @@ class Dht(DhtApi):
 		self.predecessor = None
 		self.sendSocket = socket.socket()
 		self.recvSocket = socket.socket()
-		self.recvSocket.bind((self.addr, self.port))
 		# Armazenamento:
 		self.armazenamento = ArmazenamentoLocal()
 		# Hashes:
@@ -27,6 +26,8 @@ class Dht(DhtApi):
 	def join(self, listaDePossiveisHosts, port, id_this):
 		self.port = port
 		self.id = id_this
+		self.sendSocket = socket.socket()
+		self.recvSocket = socket.socket()
 		self.recvSocket.bind((self.addr, self.port))
 		#Inicio do join, checa a lista dos possíveis hosts e conecta no primeiro que conseguir 
 		found = False
@@ -115,6 +116,7 @@ class Dht(DhtApi):
 																			 self.sucessor[2])
 			self.sendSocket.send(msg.encode())
 			self.sendSocket.close()
+			self.recvSocket.close()
 
 		except Exception as err:
 			print(err)
@@ -237,7 +239,7 @@ class Dht(DhtApi):
 			comando = ("STORE", chave, valor, self.addr, self.port)
 			self.encaminhaSucessor(comando)
 			resposta = self.aguardaResposta()
-			if resposta[0] == "ERROR"
+			if resposta[0] == "ERROR":
 				raise Exception("Erro ao adicionar valor: "+resposta[1])
 	
 	def retrieve(self, chave):
@@ -248,7 +250,7 @@ class Dht(DhtApi):
 			self.encaminhaSucessor(comando)	
 			
 			resposta = self.aguardaResposta()
-			if resposta[0] == "ERROR"
+			if resposta[0] == "ERROR":
 				raise Exception("Erro ao adicionar valor: "+resposta[1])
 			else:
 				return resposta[1]
@@ -261,7 +263,7 @@ class Dht(DhtApi):
 			self.encaminhaSucessor(comando)	
 			
 			resposta = self.aguardaResposta()
-			if resposta[0] == "ERROR"
+			if resposta[0] == "ERROR":
 				raise Exception("Erro ao adicionar valor: "+resposta[1])
 			else:
 				return resposta[1]
@@ -271,7 +273,7 @@ class Dht(DhtApi):
 		# quando receber a resposta TRANSFER_OK, removerá os itens do
 		# armazenamento.	
 		itens_a_enviar = copy.deepcopy(self.armazenamento.usuarios)
-		for chave, valor in itens_a_enviar
+		for chave, valor in itens_a_enviar:
 			comando = ("TRANSFER", chave, valor, self.addr, self.port)
 			self.encaminhaSucessor(comando)
 		del itens_a_enviar
@@ -281,7 +283,7 @@ class Dht(DhtApi):
 		# quando receber a resposta TRANSFER_OK, removerá os itens do
 		# armazenamento.	
 		itens_a_enviar = copy.deepcopy(self.armazenamento.usuarios)
-		for chave, valor in itens_a_enviar
+		for chave, valor in itens_a_enviar:
 			
 			comando = ("TRANSFER", chave, valor, self.addr, self.port)
 			self.encaminhaSucessor(comando)

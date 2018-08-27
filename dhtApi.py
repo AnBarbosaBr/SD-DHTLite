@@ -48,11 +48,8 @@ class FakeApi(DhtApi):
 		self.predecessor = None;
 		
 	def join(self, listaDePossiveisHosts):
-		if(self.__enderecos_validos(listaDePossiveisHosts)):
-			self.conectado = True;
-		else:
-			self.conectado = False;
-		return self.conectado;
+		self.conectado = True
+		return self.conectado
 	
 	def leave(self):
 		self.usuarios  = {};
@@ -103,7 +100,7 @@ class ArmazenamentoLocal(object):
 
 	def store(self, chave, valor):
 		overwrite = False
-		if self.usuarios[chave]
+		if self.usuarios[chave]:
 			overwrite = True
 		self.usuarios[chave] = valor
 		return overwrite
