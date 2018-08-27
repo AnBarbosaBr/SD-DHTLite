@@ -3,6 +3,7 @@ import sys
 import time
 from threading import Thread
 import copy
+import random
 from dhtApi import ArmazenamentoLocal, DhtApi
 
 
@@ -11,6 +12,7 @@ class Dht(DhtApi):
 		self.conectado = False
 		self.addr = '127.0.0.1'
 		self.port = 9999
+		self.id = self.get_id(5)
 		self.sucessor = None
 		self.predecessor = None
 		self.sendSocket = socket.socket()
@@ -22,10 +24,29 @@ class Dht(DhtApi):
 		self.hash_sucessor = None
 		self.hash_predecessor = None
 		
+	def get_id(self, n):
+		num = -1
+		#Uso apenas para teste, nao producao, uma maneira rapida de garantir 
+		#que os numeros nao se choquem
+		#Problema de escrita e leitura ao mesmo tempo
+		#Leitura da lista crescendo linearmente, podendo perjudicar performance
+		#E so funciona rodando diversos do mesmo diretorio
+		current_nums = [] 
+		with open("nums.txt", "r") as r:
+			for line in r:
+				current_nums.append(int(line))
+		aux = random.getrandbits(n)
+		while num == -1:
+			if aux in current_nums:
+				aux = random.getrandbits(n)
+			else:
+				with open("nums.txt", "a+") as w:
+					w.write(str(aux))
+				return aux
 
-	def join(self, listaDePossiveisHosts, port, id_this):
+	def join(self, listaDePossiveisHosts, port):
 		self.port = port
-		self.id = id_this
+		#self.id = id_this
 		self.sendSocket = socket.socket()
 		self.recvSocket = socket.socket()
 		self.recvSocket.bind((self.addr, self.port))
