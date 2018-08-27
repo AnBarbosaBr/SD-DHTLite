@@ -1,3 +1,6 @@
+{% if error %}
+    <p style="color: red">{{error_msg}}<p>
+{% endif %}
 <h4>Conecte-se a A Rede</h4> 
 <form action="/connect", method="post">
     <div class="form-group">

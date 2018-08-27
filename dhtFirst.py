@@ -158,7 +158,8 @@ class Dht(DhtApi):
 			print("Mandei isso: ", msg.replace("\n", ""))
 			self.recvSocket.close()
 			self.conectado = False
-			self.remove_number()
+			
+			#self.remove_number()
 
 		except Exception as err:
 			print(err)
@@ -226,7 +227,7 @@ class Dht(DhtApi):
 						s.send(msg.encode())
 						self.predecessor = (id_new, ip_new, port_new)
 						# EFETUANDO TRANSFERENCIA PARA O NOVO PREDECESSOR
-						self.transfer_novo_predecessor()
+						#self.transfer_novo_predecessor()
 					s.close()
 
 
