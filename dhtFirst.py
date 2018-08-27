@@ -269,11 +269,14 @@ class Dht(DhtApi):
 	# FUNCOES DE PROCESSO
 	def processSTORE(self, cmd):
 		self.assert_comando(cmd, "STORE")
-		chave_a_armazenar = cmd[1]
-		valor_a_armazenar = cmd[2]
-
+		
 		if self.responsavel_pela_resposta(cmd):
-			self.armazenamento.store(chave_a_armazenar, valor_a_armazenar)
+			chave_a_armazenar = cmd[1]
+			valor_a_armazenar = cmd[2]
+			ip_solicitante = cmd[3]
+			porta_solicitante = cmd[4]
+			resposta = self.armazenamento.store(chave_a_armazenar, valor_a_armazenar)
+			self.enviaResposta("OK", resposta, ip_solicitante, porta_solicitante)
 			# Temos que avisar o solicitante que o armazenamento ocorreu?
 		else:
 			self.encaminhaSucessor(cmd)
@@ -297,7 +300,10 @@ class Dht(DhtApi):
 		
 		if self.responsavel_pela_resposta(cmd):
 			chave_a_remover = cmd[1]
-			self.armazenamento.remove(chave_a_remover);		
+			ip_solicitante = cmd[2]
+			porta_solicitante = cmd[3]
+			resposta = self.armazenamento.remove(chave_a_remover);	
+			self.enviaResposta("OK", resposta, ip_solicitante, porta_solicitante)	
 		else:
 			self.encaminhaSucessor(cmd)
 
@@ -330,9 +336,12 @@ class Dht(DhtApi):
 		chave_menor_que_self = hash_chave < hash_proprio
 		chave_maior_que_antecessor = hash_chave > hash_antecessor
 
+		if hash_predecessor == hash_proprio and hash_sucessor == hash_proprio:
+			# Só há um nó na rede.
+			True
 		if not predecessor_menor_que_self: 
 			# deu a volta
-			return chave_maior_que_antecessor
+			return chave_maior_que_antecessor or chave_menor_que_self
 		else:
 			return chave_maior_que_antecessor and chave_menor_que_self
 	
