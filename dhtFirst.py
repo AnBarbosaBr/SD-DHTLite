@@ -96,6 +96,9 @@ class Dht(DhtApi):
 			return "Nao conectado ainda"
 
 		try:
+			# Transfere seus itens para seu SUCESSOR:
+			self.transfer_leave() # <- Para a execução até a transferencia estar completa 
+
 			#Mandando mensagem para o seu sucessor com a operacao de saida e o endereco de seu
 			#predecessor para atualizacao
 			self.sendSocket = socket.socket()
@@ -106,6 +109,9 @@ class Dht(DhtApi):
 			self.sendSocket.send(msg.encode())
 			self.sendSocket.close()
 
+			
+
+
 			#Mandando mensagem para o seu predecessor com a operacao de saida e o endereco de seu
 			#sucessor para atualizacao
 			self.sendSocket = socket.socket()
@@ -114,6 +120,7 @@ class Dht(DhtApi):
 			msg = "NODE_GONE {} {} {} \n".format(self.sucessor[0],
 																			 self.sucessor[1],
 																			 self.sucessor[2])
+			
 			self.sendSocket.send(msg.encode())
 			self.sendSocket.close()
 			self.recvSocket.close()
@@ -177,6 +184,9 @@ class Dht(DhtApi):
 						print("Enviei: ", msg)
 						s.send(msg.encode())
 						self.predecessor = (id_new, ip_new, port_new)
+						# EFETUANDO TRANSFERENCIA PARA O NOVO PREDECESSOR
+						self.transfer_novo_predecessor()
+
 
 				#Caso de entrada ou saida de um no, apenas para atualizar 
 				#o predecessor do mesmo
@@ -186,6 +196,7 @@ class Dht(DhtApi):
 					port_new = int(cmd[3])
 
 					self.sucessor = (id_new, ip_new, port_new)
+					
 
 				#Ao receber LEAVE ele atualiza o predecessor
 				elif cmd[0] == "LEAVE":
@@ -277,20 +288,28 @@ class Dht(DhtApi):
 			comando = ("TRANSFER", chave, valor, self.addr, self.port)
 			self.encaminhaSucessor(comando)
 		del itens_a_enviar
+		# Aguarda remover o ultimo item do armazenamento
+		while(len(self.armazenamento.usuarios) > 0):
+			time.sleep(0.01)
 
 	def transfer_novo_predecessor(self):
-		# Transfere os itens armazenados para o sucessor, 
-		# quando receber a resposta TRANSFER_OK, removerá os itens do
-		# armazenamento.	
+		# Verifica quais itens armazenados devem ser transferidos para
+		# o predecessor, e os transfere.
 		itens_a_enviar = copy.deepcopy(self.armazenamento.usuarios)
 		for chave, valor in itens_a_enviar:
+			hash_chave = self.hash_de(chave)
+			hash_antecessor = self.hash_de(predecessor[0])
 			
-			comando = ("TRANSFER", chave, valor, self.addr, self.port)
-			self.encaminhaSucessor(comando)
+			if (hash_chave < hash_antecessor):	
+				comando = ("TRANSFER", chave, valor, self.addr, self.port)
+				self.encaminhaSucessor(comando)
 		del itens_a_enviar
+	
+	'''def transfer_novo_sucessor(self):'''
+		# Desnecessário. Quando um novo sucessor entra, não há itens que são
+		# transferidos de um antecessor para ele. Cada nó só administra itens
+		# MENORES que ele mesmo.
 
-	def transfer_novo_sucessor(self):
-		pass
 	# FUNCOES DE PROCESSO
 	def processSTORE(self, cmd):
 		self.assert_comando(cmd, "STORE")
@@ -419,6 +438,20 @@ class Dht(DhtApi):
 	def aguardaResposta(self):
 		#TODO: Aguarda resposta
 		# resposta = ...(algo recebido pela rede, no formato acima: tupla (tipo, conteudo)
+		# Sempre que o cliente envia uma solicitação que exige resposta para a rede, por exemplo,
+		# quando ele pede para recuperar alguma chave, ele chama essa função. A resposta será enviada
+		# usando a função enviaResposta, e terá formato, +- assim ("OK", conteudo), ou ("ERRO", msg erro)
+		# Essa resposta será interpretada pela função que iniciou o contato, e exibida no navegador do
+		# usuário.
+
+		# Exemplo: 
+		# 	1) usuario clica em localizar "andre".
+		# 	2) No main.py, será chamado dhtRepo.retrieve("andre")
+		#	3a) Se a função precisar consultar a rede:
+		# 	 		3.1) enviará uma mensagem ao sucessor 
+		# 			3.2) aguardará a resposta
+		#	4) Ao receber a resposta, irá retornar, main.py receberá as informações e exibirá no navegador.
+
 		return reposta
 	
 	def obtem_solicitante(self, cmd):
