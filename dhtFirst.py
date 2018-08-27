@@ -5,6 +5,7 @@ from threading import Thread
 import copy
 import random
 from dhtApi import ArmazenamentoLocal, DhtApi
+import re
 
 
 class Dht(DhtApi):
@@ -21,8 +22,7 @@ class Dht(DhtApi):
 		self.armazenamento = ArmazenamentoLocal()
 		# Hashes:
 		self.hash_proprio = self.hash_de(self.id)
-		self.hash_sucessor = None
-		self.hash_predecessor = None
+		self.resposta_assincrona = None
 		
 	def get_id(self, n):
 		num = -1
@@ -148,6 +148,7 @@ class Dht(DhtApi):
 
 		except Exception as err:
 			print(err)
+		self.conectado=False;	
 
 	def listen(self):
 		#Handler de novas conexoes, ao receber uma requisicao ele cria uma nova thread
@@ -171,7 +172,7 @@ class Dht(DhtApi):
 				data = conn.recv(1024)
 				if not data:
 					break
-				cmd = data.decode().split(" ")
+				cmd = self.transforma(data.decode())
 				print("Recebi: ", cmd)
 
 				#Se o comando recebido for JOIN, checar a posicao devida na rede
@@ -183,7 +184,11 @@ class Dht(DhtApi):
 
 					#Checando se deve passar ou nao a requisicao do novo no para frente na rede
 					#Se nao estiver na posicao certa, e enviado para seu sucessor
-					if self.id < id_new and self.predecessor[0] < self.id:
+	
+					#if self.id < id_new and self.predecessor[0] < self.id:
+					if self.id == id_new:
+						raise Exception("IDs repetidos. Inicie o servidor novamente.")
+					if not self.responsavel_pela_chave(id_new):
 						s.connect((self.sucessor[1], self.sucessor[2]))
 						msg = "JOIN {} {} {} \n".format(id_new,
 																				 		ip_new,
@@ -211,7 +216,7 @@ class Dht(DhtApi):
 
 				#Caso de entrada ou saida de um no, apenas para atualizar 
 				#o predecessor do mesmo
-				elif cmd[0] == "NEW_NODE" or "NODE_GONE":
+				elif cmd[0] == "NEW_NODE" or cmd[0]=="NODE_GONE":
 					id_new = int(cmd[1])
 					ip_new = cmd[2]
 					port_new = int(cmd[3])
@@ -262,6 +267,9 @@ class Dht(DhtApi):
 		# o responsável, que responderá diretamente ao solicitante.
 		elif cmd[0] == "REMOVE":
 			self.processREMOVE(cmd)	
+		
+		elif cmd[0]== "OK":
+			self.processOK(cmd)
 
 
 	def store(self, chave, valor):
@@ -344,7 +352,7 @@ class Dht(DhtApi):
 		
 		if self.responsavel_pela_resposta(cmd):
 			chave_a_armazenar = cmd[1]
-			valor_a_armazenar = cmd[2]
+			valor_a_armazenar = eval(cmd[2])
 			ip_solicitante = cmd[3]
 			porta_solicitante = cmd[4]
 			resposta = self.armazenamento.store(chave_a_armazenar, valor_a_armazenar)
@@ -399,6 +407,10 @@ class Dht(DhtApi):
 		self.assert_comando(cmd[0], "TRANSFER_OK")	
 		self.armazenamento.remove(cmd[1])
 
+	def processOK(self, cmd):
+		self.assert_comando(cmd[0], "OK")
+		self.resposta_assincrona = copy.deepcopy(cmd[1])
+
 		
 	
 	
@@ -433,8 +445,10 @@ class Dht(DhtApi):
 		return self.responsavel_pela_chave(cmd[1])
 
 	def encaminhaSucessor(self, cmd):
-		msg = ' '.join(str(cmd))+" \n"
-		#TODO: Enviar para o sucessor.
+		lista = list(cmd)
+		msg = ' '.join(str(i) for i in lista)+" \n"
+		print("Encaminhando: {}\n".format(msg))
+		
 		try:
 			self.sendSocket = socket.socket()
 			self.sendSocket.connect((self.sucessor[1], self.sucessor[2]))
@@ -448,10 +462,12 @@ class Dht(DhtApi):
 
 	def enviaResposta(self, tipo_resp, conteudo, ip_solicitante, porta_solicitante):
 		msg = (tipo_resp, conteudo)
-		msg = ' '.join(str(msg))+" \n"
+		lista = list(msg)
+		msg = ' '.join(str(i) for i in lista)+" \n"
+
 		try:
 			self.sendSocket = socket.socket()
-			self.sendSocket.connect((ip_solicitante, porta_solicitante))
+			self.sendSocket.connect((ip_solicitante, int(porta_solicitante)))
 			self.sendSocket.send(msg.encode())
 			self.sendSocket.close()
 		except Exception as err:
@@ -460,7 +476,7 @@ class Dht(DhtApi):
 			else:
 				error_msg = "Não foi possível encaminhar uma resposta ao sucessor de {}\n".format(id)
 				self.enviaResposta("ERROR", error_msg, ip_solicitante, porta_solicitante)
-		return msg
+		return msg.encode()
 		
 
 	def aguardaResposta(self):
@@ -479,9 +495,45 @@ class Dht(DhtApi):
 		# 	 		3.1) enviará uma mensagem ao sucessor 
 		# 			3.2) aguardará a resposta
 		#	4) Ao receber a resposta, irá retornar, main.py receberá as informações e exibirá no navegador.
-		raise NotImplementedError
+		while not self.resposta_assincrona:
+			time.sleep(0.01)
+		resposta = copy.deepcopy(self.resposta_assincrona)
+		self.resposta_assincrona = None
 		return resposta
 	
+	def transforma(self, texto):
+		print("Decodificando: {}".format(texto))
+		cmd = texto.split(" ")
+		tipo = cmd[0]
+		if (tipo=="JOIN" or tipo=="JOIN_OK" or tipo=="LEAVE" or tipo=="NODE_GONE" or
+			tipo=="NEW_NODE"):
+			return cmd
+
+		elif (tipo=="REMOVE" or tipo=="RETRIEVE"):
+			return cmd
+
+		elif(tipo=="STORE" or tipo=="TRANSFER" or tipo=="TRANSFER_OK"):
+			
+			resposta = (cmd[0],)
+			dados_usuario = re.split("({.*?})",texto)[1]
+			chave = cmd[1]
+			endereco = re.split("({.*?})",texto)[2].split(" ")
+			ip = endereco[1]
+			porta = endereco[2]
+
+			return resposta + (chave, dados_usuario, ip, porta)
+			
+		elif(tipo=="OK"):
+			resposta = (cmd[0],)
+			dados_usuario = re.split("({.*?})",texto)[1]
+			endereco = re.split("({.*?})",texto)[2].split(" ")
+			ip = endereco[1]
+			porta = endereco[2]
+
+			return resposta + (dados_usuario, ip, porta)
+		
+		
+
 	def obtem_solicitante(self, cmd):
 		if cmd[0]=="STORE" or cmd[0]=="TRANSFER":
 			return (cmd[3], cmd[4])
@@ -496,5 +548,10 @@ if __name__ == "__main__":
 	#python dhtfirst.py [porta] [id]
 	hosts = [('127.0.0.1', 7001)]
 	d = Dht()
-	d.join(hosts, int(sys.argv[1]), int(sys.argv[2]))
+	#d.join(hosts, int(sys.argv[1]), int(sys.argv[2]))
+	personagem = { 'nome': "Andre Barbosa", 'email': "seupera@hotmail.com"}
+	stub = ('STORE', 'David', personagem, '127.0.0.1', 4521)
+	lista = list(stub)
+	msg = ' '.join(str(i) for i in lista)+" \n"
 
+	print(d.transforma(msg))
