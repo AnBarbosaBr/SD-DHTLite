@@ -435,6 +435,20 @@ class Dht(DhtApi):
 	def aguardaResposta(self):
 		#TODO: Aguarda resposta
 		# resposta = ...(algo recebido pela rede, no formato acima: tupla (tipo, conteudo)
+		# Sempre que o cliente envia uma solicitação que exige resposta para a rede, por exemplo,
+		# quando ele pede para recuperar alguma chave, ele chama essa função. A resposta será enviada
+		# usando a função enviaResposta, e terá formato, +- assim ("OK", conteudo), ou ("ERRO", msg erro)
+		# Essa resposta será interpretada pela função que iniciou o contato, e exibida no navegador do
+		# usuário.
+
+		# Exemplo: 
+		# 	1) usuario clica em localizar "andre".
+		# 	2) No main.py, será chamado dhtRepo.retrieve("andre")
+		#	3a) Se a função precisar consultar a rede:
+		# 	 		3.1) enviará uma mensagem ao sucessor 
+		# 			3.2) aguardará a resposta
+		#	4) Ao receber a resposta, irá retornar, main.py receberá as informações e exibirá no navegador.
+
 		return reposta
 	
 	def obtem_solicitante(self, cmd):
