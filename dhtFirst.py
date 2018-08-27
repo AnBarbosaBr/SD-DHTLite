@@ -227,6 +227,7 @@ class Dht(DhtApi):
 						self.predecessor = (id_new, ip_new, port_new)
 						# EFETUANDO TRANSFERENCIA PARA O NOVO PREDECESSOR
 						self.transfer_novo_predecessor()
+					s.close()
 
 
 				#Caso de entrada ou saida de um no, apenas para atualizar 
