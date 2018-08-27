@@ -105,6 +105,10 @@ class Dht(DhtApi):
 			self.sendSocket.send(msg.encode())
 			self.sendSocket.close()
 
+			# Transfere seus itens para seu SUCESSOR:
+			self.transfer_leave()
+
+
 			#Mandando mensagem para o seu predecessor com a operacao de saida e o endereco de seu
 			#sucessor para atualizacao
 			self.sendSocket = socket.socket()
@@ -113,6 +117,7 @@ class Dht(DhtApi):
 			msg = "NODE_GONE {} {} {} \n".format(self.sucessor[0],
 																			 self.sucessor[1],
 																			 self.sucessor[2])
+			
 			self.sendSocket.send(msg.encode())
 			self.sendSocket.close()
 
@@ -275,20 +280,28 @@ class Dht(DhtApi):
 			comando = ("TRANSFER", chave, valor, self.addr, self.port)
 			self.encaminhaSucessor(comando)
 		del itens_a_enviar
+		# Aguarda remover o ultimo item do armazenamento
+		while(len(self.armazenamento.usuarios) > 0):
+			time.sleep(0.01)
 
 	def transfer_novo_predecessor(self):
-		# Transfere os itens armazenados para o sucessor, 
-		# quando receber a resposta TRANSFER_OK, removerá os itens do
-		# armazenamento.	
+		# Verifica quais itens armazenados devem ser transferidos para
+		# o predecessor, e os transfere.
 		itens_a_enviar = copy.deepcopy(self.armazenamento.usuarios)
 		for chave, valor in itens_a_enviar
+			hash_chave = self.hash_de(chave)
+			hash_antecessor = self.hash_de(predecessor[0])
 			
-			comando = ("TRANSFER", chave, valor, self.addr, self.port)
-			self.encaminhaSucessor(comando)
+			if (hash_chave < hash_antecessor):	
+				comando = ("TRANSFER", chave, valor, self.addr, self.port)
+				self.encaminhaSucessor(comando)
 		del itens_a_enviar
+	
+	'''def transfer_novo_sucessor(self):'''
+		# Desnecessário. Quando um novo sucessor entra, não há itens que são
+		# transferidos de um antecessor para ele. Cada nó só administra itens
+		# MENORES que ele mesmo.
 
-	def transfer_novo_sucessor(self):
-		pass
 	# FUNCOES DE PROCESSO
 	def processSTORE(self, cmd):
 		self.assert_comando(cmd, "STORE")
