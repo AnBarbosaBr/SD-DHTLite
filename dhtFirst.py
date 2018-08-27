@@ -2,7 +2,7 @@ import socket
 import sys
 import time
 from threading import Thread
-
+import copy
 from dhtApi import ArmazenamentoLocal, DhtApi
 
 
@@ -222,6 +222,8 @@ class Dht(DhtApi):
 		elif cmd[0] == "TRANSFER":
 			self.processTRANSFER(cmd)
 
+		elif cmd[0] == "TRANSFER_OK":
+			self.processTRANSFER_OK(cmd)
 		# Remove um elemento da lista. A mensagem é encaminhada até
 		# o responsável, que responderá diretamente ao solicitante.
 		elif cmd[0] == "REMOVE":
@@ -251,7 +253,6 @@ class Dht(DhtApi):
 			else:
 				return resposta[1]
 
-
 	def remove(self, chave):
 		if self.responsavel_pela_chave(chave):
 			return self.armazenamento.remove(chave)
@@ -265,7 +266,29 @@ class Dht(DhtApi):
 			else:
 				return resposta[1]
 
+	def transfer_leave(self):
+		# Transfere os itens armazenados para o sucessor, 
+		# quando receber a resposta TRANSFER_OK, removerá os itens do
+		# armazenamento.	
+		itens_a_enviar = copy.deepcopy(self.armazenamento.usuarios)
+		for chave, valor in itens_a_enviar
+			comando = ("TRANSFER", chave, valor, self.addr, self.port)
+			self.encaminhaSucessor(comando)
+		del itens_a_enviar
 
+	def transfer_novo_predecessor(self):
+		# Transfere os itens armazenados para o sucessor, 
+		# quando receber a resposta TRANSFER_OK, removerá os itens do
+		# armazenamento.	
+		itens_a_enviar = copy.deepcopy(self.armazenamento.usuarios)
+		for chave, valor in itens_a_enviar
+			
+			comando = ("TRANSFER", chave, valor, self.addr, self.port)
+			self.encaminhaSucessor(comando)
+		del itens_a_enviar
+
+	def transfer_novo_sucessor(self):
+		pass
 	# FUNCOES DE PROCESSO
 	def processSTORE(self, cmd):
 		self.assert_comando(cmd, "STORE")
@@ -308,14 +331,26 @@ class Dht(DhtApi):
 			self.encaminhaSucessor(cmd)
 
 	def processTRANSFER(self, cmd):
-		# TODO: TERMINAR ESSA FUNACO
 		self.assert_comando(cmd, "TRANSFER")	
 
-		if self.responsavel_pela_resposta(cmd):
-			# EXECUTAR LOGICA
-			pass
-		else: 
-			self.encaminhaSucessor(cmd)	
+		# O comando transfer não analisa se o alvo é ou não responsável
+		# pelas chaves. Assume-se que o nó que transfere os arquivos está
+		# enviando os dados ao nó correto.
+		chave_a_armazenar = cmd[1]
+		valor_a_armazenar = cmd[2]
+		ip_solicitante = cmd[3]
+		porta_solicitante = cmd[4]
+		self.armazenamento.store(chave_a_armazenar, valor_a_armazenar);
+		self.enviaResposta("TRANSFER_OK", chave_a_armazenar, ip_solicitante, porta_solicitante)
+		
+	def processTRANSFER_OK(self, cmd):
+		# O comando TRANSFER_OK só é recebido após uma requisição de TRANSFER
+		# ser enviada, por isso não se checa se o receptor é ou não responsável
+		# pela chave.
+		self.assert_comando(cmd[0], "TRANSFER_OK")	
+		self.armazenamento.remove(cmd[1])
+
+		
 	
 	
 	# FUNCOES AUXILIARES ==================================================
@@ -385,7 +420,7 @@ class Dht(DhtApi):
 		return reposta
 	
 	def obtem_solicitante(self, cmd):
-		if cmd[0]=="STORE":
+		if cmd[0]=="STORE" or cmd[0]=="TRANSFER":
 			return (cmd[3], cmd[4])
 		if cmd[0]=="RETRIEVE" or cmd[0]=="REMOVE":
 			return (cmd[2], cmd[3])
