@@ -3,10 +3,17 @@ from jinja2 import Template
 import sys
 from dhtFirst import Dht
 import dhtApi
+import argparse
 
 app = Flask(__name__)
 
 default_address = '0.0.0.0/9000'
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--port", 
+										help="Server port", 
+										default=9000)
+port = parser.port
 
 # Criamos uma instância do adaptador da API:
 dhtRepo = dhtApi.FakeApi()
@@ -127,4 +134,4 @@ def search():
 #@app.route("")
 
 if __name__ == "__main__":
-	app.run(host='0.0.0.0', port=9000)
+	app.run(host='0.0.0.0', port=port)
