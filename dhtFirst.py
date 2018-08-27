@@ -10,6 +10,7 @@ class Dht(DhtApi):
 	def __init__(self):
 		self.conectado = False
 		self.addr = '127.0.0.1'
+		self.port = 9999
 		self.sucessor = None
 		self.predecessor = None
 		self.sendSocket = socket.socket()
@@ -225,19 +226,48 @@ class Dht(DhtApi):
 		# o responsável, que responderá diretamente ao solicitante.
 		elif cmd[0] == "REMOVE":
 			self.processREMOVE(cmd)	
-																			
-	def store(self, chave, valor):
-		pass
 
+
+	def store(self, chave, valor):
+		if self.responsavel_pela_chave(chave):
+			self.armazenamento.store(chave, valor)
+		else:
+			comando = ("STORE", chave, valor, self.addr, self.port)
+			self.encaminhaSucessor(comando)
+			resposta = self.aguardaResposta()
+			if resposta[0] == "ERROR"
+				raise Exception("Erro ao adicionar valor: "+resposta[1])
+	
 	def retrieve(self, chave):
-		pass
-		
+		if self.responsavel_pela_chave(chave):
+			return self.armazenamento.retrieve(chave)
+		else:
+			comando = ("RETRIEVE", chave, self.addr, self.port)
+			self.encaminhaSucessor(comando)	
+			
+			resposta = self.aguardaResposta()
+			if resposta[0] == "ERROR"
+				raise Exception("Erro ao adicionar valor: "+resposta[1])
+			else:
+				return resposta[1]
+
+
 	def remove(self, chave):
-		pass	
+		if self.responsavel_pela_chave(chave):
+			return self.armazenamento.remove(chave)
+		else:
+			comando = ("RETRIEVE", chave, self.addr, self.port)
+			self.encaminhaSucessor(comando)	
+			
+			resposta = self.aguardaResposta()
+			if resposta[0] == "ERROR"
+				raise Exception("Erro ao adicionar valor: "+resposta[1])
+			else:
+				return resposta[1]
 
 
 	# FUNCOES DE PROCESSO
-	def def processSTORE(self, cmd):
+	def processSTORE(self, cmd):
 		self.assert_comando(cmd, "STORE")
 		chave_a_armazenar = cmd[1]
 		valor_a_armazenar = cmd[2]
@@ -245,6 +275,9 @@ class Dht(DhtApi):
 		if self.responsavel_pela_resposta(cmd):
 			self.armazenamento.store(chave_a_armazenar, valor_a_armazenar)
 			# Temos que avisar o solicitante que o armazenamento ocorreu?
+		else:
+			self.encaminhaSucessor(cmd)
+
 
 	def processRETRIEVE(self, cmd):
 		self.assert_comando(cmd, "RETRIEVE")
@@ -255,9 +288,7 @@ class Dht(DhtApi):
 			porta_solicitante = cmd[3]
 			
 			resposta = self.armazenamento.retrieve(chave_a_recuperar)
-
-
-			enviaResposta("OK", resposta, ip_solicitante, porta_solicitante)
+			self.enviaResposta("OK", resposta, ip_solicitante, porta_solicitante)
 		else:
 			self.encaminhaSucessor(cmd)
 
@@ -276,23 +307,24 @@ class Dht(DhtApi):
 
 		if self.responsavel_pela_resposta(cmd):
 			# EXECUTAR LOGICA
-
+			pass
 		else: 
 			self.encaminhaSucessor(cmd)	
-	# FUNCOES AUXILIARES
+	
+	
+	# FUNCOES AUXILIARES ==================================================
 
-	def assert_comando(self, cmd, esperado):
+	def assert_comando(self, cmd, comando_esperado):
 		if not (cmd[0] == comando_esperado):
 			raise Exception(
 				"Process {} deve receber um cmd '{}', foi recebido {}\n".format(
 					comando_esperado, comando_esperado, cmd[0]))
 
-	def responsavel_pela_resposta(self, cmd):
-
+	def responsavel_pela_chave(self, chave):
 		hash_proprio = self.hash_proprio
-		hash_predecessor = self.hash_de(predecessor[0])
-		hash_sucessor = self.hash_de(sucessor[0])	
-		hash_chave = self.hash_de(cmd[1])
+		hash_predecessor = self.hash_de(self.predecessor[0])
+		hash_sucessor = self.hash_de(self.sucessor[0])	
+		hash_chave = self.hash_de(chave)
 		
 		predecessor_menor_que_self = hash_predecessor < hash_proprio
 		chave_menor_que_self = hash_chave < hash_proprio
@@ -303,18 +335,26 @@ class Dht(DhtApi):
 			return chave_maior_que_antecessor
 		else:
 			return chave_maior_que_antecessor and chave_menor_que_self
-
+	
+	def responsavel_pela_resposta(self, cmd):
+		return self.responsavel_pela_chave(cmd[1])
 
 	def encaminhaSucessor(self, cmd):
-		# TODO
-		pass
-	def enviaResposta(self, tipo_resp, resposta, ip_solicitante, porta_solicitante):
-		# TODO
+		msg = ' '.join(cmd)+" \n"
+		#TODO: Enviar para o sucessor.
+		return msg
+
+	def enviaResposta(self, tipo_resp, conteudo, ip_solicitante, porta_solicitante):
+		msg = (tipo_resp, conteudo)
+		# TODO: Enviar para ip_solicitante, porta_solicitante.
 		pass
 
 	def aguardaResposta(self):
-		# TODO
-		pass	
+		#TODO: Aguarda resposta
+		# resposta = ...(algo recebido pela rede, no formato acima: tupla (tipo, conteudo)
+		return reposta
+		
+
 
 if __name__ == "__main__":
 	#Para executar como main e necessario o seguinte comando
@@ -322,3 +362,4 @@ if __name__ == "__main__":
 	hosts = [('127.0.0.1', 7001)]
 	d = Dht()
 	d.join(hosts, int(sys.argv[1]), int(sys.argv[2]))
+
