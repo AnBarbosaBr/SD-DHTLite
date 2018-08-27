@@ -48,7 +48,7 @@ def root():
 		 id_pred = str(dht.predecessor[0])
 		 ip_suc=dht.sucessor[1]
 		 porta_suc=str(dht.sucessor[2])
-		 id_suc = str(dht.predecessor[0])
+		 id_suc = str(dht.sucessor[0])
 
 	return render_template('home.html', conectado=conectado[0],
 		porta=port, ip=ip,
@@ -83,7 +83,7 @@ def connect():
 																			porta_suc=str(dht.sucessor[2]),
 																			id_mine = str(dht.id),
 																			id_pred = str(dht.predecessor[0]),
-																			id_suc = str(dht.predecessor[0]),
+																			id_suc = str(dht.sucessor[0]),
 																			error=False, error_msg=None)
 
 		except Exception as err:
