@@ -11,9 +11,12 @@ default_address = '0.0.0.0/9000'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--port", 
-										help="Server port", 
+										help="Server port",
+										type=int, 
 										default=9000)
-port = parser.port
+
+args = parser.parse_args()
+port = args.port
 
 # Criamos uma instância do adaptador da API:
 dhtRepo = dhtApi.FakeApi()
@@ -35,12 +38,12 @@ def connect():
 			dht.conectado = False
 			ip = request.form['ip']
 			port = request.form['port']
-			id_ = request.form['id']
-			print(ip, port, id_)
-			hosts = [('127.0.0.1', 7001)]
-			
+			ip_target = request.form['ip_target']
+			port_target = request.form['port_target']
+			print(ip, port, ip_target, port_target)
+			hosts = [(ip_target, int(port_target))]
 			## Incluindo chamado à API.
-			dht.join(hosts, int(port), int(id_))
+			dht.join(hosts, int(port))
 			dhtRepo.join([str(ip)+str(port)])
 			conectado = True
 			#conectar com o node do ip e port indicados
@@ -50,7 +53,7 @@ def connect():
 																			ip=ip,
 																			porta=port)
 
-		except ValueError as err:
+		except Exception as err:
 			print(err)
 			return render_template('home.html', conectado=False)
 		

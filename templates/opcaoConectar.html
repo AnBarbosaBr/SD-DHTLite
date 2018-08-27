@@ -9,11 +9,22 @@
         <input type="text" class="form-control" id="port" name="port" aria-describedby="connectHelpPorta" placeholder="40001">
         <small id="connectHelpPorta" class="form-text text-muted">Inteiro, sem pontos. ex 40001.</small>
         <br>
-        <label>Id:</label>
+        <br>
+        <p>Conectar atraves seguinte host:</p>
+        <br>
+        <label for="conAdress">Endereço IP:</label>
+        <input type="text" class="form-control" id="ip" name="ip_target" aria-describedby="connectHelpEnd" placeholder="127.0.0.1"readonly value="127.0.0.1">
+        <small id="connectHelpEnd" class="form-text text-muted">Endereço IP conhecido n´A Rede, ex: 127.0.0.1.</small>
+        <br>
+        <label>Porta:</label>
+        <input type="text" class="form-control" id="port" name="port_target" aria-describedby="connectHelpPorta" placeholder="7000" value="7000">
+        <small id="connectHelpPorta" class="form-text text-muted">Inteiro, sem pontos. ex 40001.</small>
+        <br>
+        <!--<label>Id:</label>
         <input type="text" class="form-control" id="id" name="id" aria-describedby="connectHelpId" placeholder="1">
-        <small id="connectHelpPorta" class="form-text text-muted">Id do ponto de acesso, Inteiro ex: 2.</small>
+        <small id="connectHelpPorta" class="form-text text-muted">Id do ponto de acesso, Inteiro ex: 2.</small> -->
     </div>
 
-    <button>Conectar-se à rede.</button>
+    <button class="btn btn-primary">Conectar-se à rede.</button>
 
 </form>
