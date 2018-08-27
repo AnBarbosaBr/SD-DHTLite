@@ -96,7 +96,7 @@ class Dht(DhtApi):
 
 		try:
 			# Transfere seus itens para seu SUCESSOR:
-			self.transfer_leave() ''' <- Para a execução até a transferencia estar completa '''
+			self.transfer_leave() # <- Para a execução até a transferencia estar completa 
 
 			#Mandando mensagem para o seu sucessor com a operacao de saida e o endereco de seu
 			#predecessor para atualizacao
@@ -182,7 +182,8 @@ class Dht(DhtApi):
 						print("Enviei: ", msg)
 						s.send(msg.encode())
 						self.predecessor = (id_new, ip_new, port_new)
-''' >>>>>>>> '''		self.transfer_novo_predecessor()
+						# EFETUANDO TRANSFERENCIA PARA O NOVO PREDECESSOR
+						self.transfer_novo_predecessor()
 
 
 				#Caso de entrada ou saida de um no, apenas para atualizar 
@@ -247,7 +248,7 @@ class Dht(DhtApi):
 			comando = ("STORE", chave, valor, self.addr, self.port)
 			self.encaminhaSucessor(comando)
 			resposta = self.aguardaResposta()
-			if resposta[0] == "ERROR"
+			if resposta[0] == "ERROR":
 				raise Exception("Erro ao adicionar valor: "+resposta[1])
 	
 	def retrieve(self, chave):
@@ -258,7 +259,7 @@ class Dht(DhtApi):
 			self.encaminhaSucessor(comando)	
 			
 			resposta = self.aguardaResposta()
-			if resposta[0] == "ERROR"
+			if resposta[0] == "ERROR":
 				raise Exception("Erro ao adicionar valor: "+resposta[1])
 			else:
 				return resposta[1]
@@ -271,7 +272,7 @@ class Dht(DhtApi):
 			self.encaminhaSucessor(comando)	
 			
 			resposta = self.aguardaResposta()
-			if resposta[0] == "ERROR"
+			if resposta[0] == "ERROR":
 				raise Exception("Erro ao adicionar valor: "+resposta[1])
 			else:
 				return resposta[1]
@@ -281,7 +282,7 @@ class Dht(DhtApi):
 		# quando receber a resposta TRANSFER_OK, removerá os itens do
 		# armazenamento.	
 		itens_a_enviar = copy.deepcopy(self.armazenamento.usuarios)
-		for chave, valor in itens_a_enviar
+		for chave, valor in itens_a_enviar:
 			comando = ("TRANSFER", chave, valor, self.addr, self.port)
 			self.encaminhaSucessor(comando)
 		del itens_a_enviar
@@ -293,7 +294,7 @@ class Dht(DhtApi):
 		# Verifica quais itens armazenados devem ser transferidos para
 		# o predecessor, e os transfere.
 		itens_a_enviar = copy.deepcopy(self.armazenamento.usuarios)
-		for chave, valor in itens_a_enviar
+		for chave, valor in itens_a_enviar:
 			hash_chave = self.hash_de(chave)
 			hash_antecessor = self.hash_de(predecessor[0])
 			

@@ -1,7 +1,6 @@
 # coding:utf-8
 import abc
 import hashlib
-from enum import Enum
 	
 class DhtApi(object):
 
@@ -97,7 +96,7 @@ class ArmazenamentoLocal(object):
 
 	def store(self, chave, valor):
 		overwrite = False
-		if self.usuarios[chave]
+		if self.usuarios[chave]:
 			overwrite = True
 		self.usuarios[chave] = valor
 		return overwrite
