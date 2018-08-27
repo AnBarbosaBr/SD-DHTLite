@@ -3,6 +3,12 @@
 </div>
 
 <div>
-    Conectado no endereço
-    {{ ip + " " + porta}}
+    <p>Conectado. </p>
+    <p>Seu endereco é: {{ ip + " " + porta}}</p>
+    <p>Seu predecessor é: {{ ip_pred + " "+ porta_pred}}</p>
+    <p>Seu sucessor é: {{ ip_suc + " "+ porta_suc}}</p>
 </div>
+
+<form method=";" action="/">
+    <button type="submit" class="btn btn-primary">Atualizar</button>
+</form>

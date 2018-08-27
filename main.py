@@ -26,9 +26,32 @@ conectado = False
 
 dht = Dht()
 
+def render_home():
+	estou_conectado = dht.conectado
+	my_ip=dht.addr
+	my_porta=dht.port
+	suc_ip  = "Nao definido."
+	pred_ip = "Nao definido."
+	suc_port = "Nao definida"
+	pred_port = "Nao definida"
+	if dht.predecessor:
+		suc_ip=dht.sucessor[1]
+		suc_port=dht.sucessor[2]
+	if dht.sucessor:
+		pred_ip=dht.predecessor[1]
+		pred_port=dht.predecessor[2]
+
+	return render_template('home.html', conectado=estou_conectado, 
+								ip=my_ip, 
+								porta=str(my_porta),
+								ip_suc=suc_ip,
+								ip_pred=pred_ip,
+								porta_suc=str(suc_port),
+								porta_pred=str(pred_port))
+
 @app.route("/", methods=['GET'])
 def root():
-	return render_template('home.html', conectado=conectado)
+	return render_home()
 
 @app.route("/connect", methods=['POST'])
 def connect():
@@ -47,24 +70,19 @@ def connect():
 			conectado = True
 			#conectar com o node do ip e port indicados
 			#else
-			#conectar com o endereço default
-			return render_template('home.html', conectado=True, 
-																			ip=ip,
-																			porta=port)
-
 		except Exception as err:
 			print(err)
-			return render_template('home.html', conectado=False)
+		
+		return render_home()	
 		
 
 @app.route("/dc", methods=['GET'])
 def dc():
 	## Incluindo chamado à API.
 	dht.leave()
-	dhtRepo.leave()
 	#metodo de desconectar do node
 	conectado = False
-	return render_template('home.html', conectado=conectado)
+	return render_home()
 
 @app.route("/add", methods=['GET','POST'])
 def add():
@@ -133,7 +151,7 @@ def search():
 		 return render_template('failure.html', failure_message=str(err))
 
 	#metodo de buscar pelo username
-
+	
 
 #@app.route("")
 

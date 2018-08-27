@@ -20,7 +20,7 @@ class Dht(DhtApi):
 		# Armazenamento:
 		self.armazenamento = ArmazenamentoLocal()
 		# Hashes:
-		self.hash_proprio = self.hash_de(id)
+		self.hash_proprio = self.hash_de(self.id)
 		self.hash_sucessor = None
 		self.hash_predecessor = None
 		
@@ -265,6 +265,8 @@ class Dht(DhtApi):
 
 
 	def store(self, chave, valor):
+		if not self.conectado:
+			raise Exception("Você ainda não está conectado. Conecte-se antes de realizar qualquer ação.")
 		if self.responsavel_pela_chave(chave):
 			self.armazenamento.store(chave, valor)
 		else:
@@ -275,6 +277,8 @@ class Dht(DhtApi):
 				raise Exception("Erro ao adicionar valor: "+resposta[1])
 	
 	def retrieve(self, chave):
+		if not self.conectado:
+			raise Exception("Você ainda não está conectado. Conecte-se antes de realizar qualquer ação.")
 		if self.responsavel_pela_chave(chave):
 			return self.armazenamento.retrieve(chave)
 		else:
@@ -288,6 +292,9 @@ class Dht(DhtApi):
 				return resposta[1]
 
 	def remove(self, chave):
+		if not self.conectado:
+			raise Exception("Você ainda não está conectado. Conecte-se antes de realizar qualquer ação.")
+
 		if self.responsavel_pela_chave(chave):
 			return self.armazenamento.remove(chave)
 		else:
@@ -319,7 +326,7 @@ class Dht(DhtApi):
 		itens_a_enviar = copy.deepcopy(self.armazenamento.usuarios)
 		for chave, valor in itens_a_enviar:
 			hash_chave = self.hash_de(chave)
-			hash_antecessor = self.hash_de(predecessor[0])
+			hash_antecessor = self.hash_de(self.predecessor[0])
 			
 			if (hash_chave < hash_antecessor):	
 				comando = ("TRANSFER", chave, valor, self.addr, self.port)
@@ -382,7 +389,7 @@ class Dht(DhtApi):
 		valor_a_armazenar = cmd[2]
 		ip_solicitante = cmd[3]
 		porta_solicitante = cmd[4]
-		self.armazenamento.store(chave_a_armazenar, valor_a_armazenar);
+		self.armazenamento.store(chave_a_armazenar, valor_a_armazenar)
 		self.enviaResposta("TRANSFER_OK", chave_a_armazenar, ip_solicitante, porta_solicitante)
 		
 	def processTRANSFER_OK(self, cmd):
@@ -426,7 +433,7 @@ class Dht(DhtApi):
 		return self.responsavel_pela_chave(cmd[1])
 
 	def encaminhaSucessor(self, cmd):
-		msg = ' '.join(cmd)+" \n"
+		msg = ' '.join(str(cmd))+" \n"
 		#TODO: Enviar para o sucessor.
 		try:
 			self.sendSocket = socket.socket()
@@ -441,7 +448,7 @@ class Dht(DhtApi):
 
 	def enviaResposta(self, tipo_resp, conteudo, ip_solicitante, porta_solicitante):
 		msg = (tipo_resp, conteudo)
-		# TODO: Enviar para ip_solicitante, porta_solicitante.
+		msg = ' '.join(str(msg))+" \n"
 		try:
 			self.sendSocket = socket.socket()
 			self.sendSocket.connect((ip_solicitante, porta_solicitante))
@@ -472,8 +479,8 @@ class Dht(DhtApi):
 		# 	 		3.1) enviará uma mensagem ao sucessor 
 		# 			3.2) aguardará a resposta
 		#	4) Ao receber a resposta, irá retornar, main.py receberá as informações e exibirá no navegador.
-
-		return reposta
+		raise NotImplementedError
+		return resposta
 	
 	def obtem_solicitante(self, cmd):
 		if cmd[0]=="STORE" or cmd[0]=="TRANSFER":
