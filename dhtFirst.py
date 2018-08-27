@@ -351,18 +351,46 @@ class Dht(DhtApi):
 	def encaminhaSucessor(self, cmd):
 		msg = ' '.join(cmd)+" \n"
 		#TODO: Enviar para o sucessor.
+		try:
+			self.sendSocket = socket.socket()
+			self.sendSocket.connect((self.sucessor[1], self.sucessor[2]))
+			self.sendSocket.send(msg.encode())
+			self.sendSocket.close()
+		except Exception as err:
+			error_msg = "Não foi possível encaminhar uma resposta ao sucessor de {}\n".format(id)
+			solicitante = self.obtem_solicitante(cmd)
+			self.enviaResposta("ERROR", error_msg, solicitante[0], solicitante[1])
 		return msg
 
 	def enviaResposta(self, tipo_resp, conteudo, ip_solicitante, porta_solicitante):
 		msg = (tipo_resp, conteudo)
 		# TODO: Enviar para ip_solicitante, porta_solicitante.
-		pass
+		try:
+			self.sendSocket = socket.socket()
+			self.sendSocket.connect((ip_solicitante, porta_solicitante))
+			self.sendSocket.send(msg.encode())
+			self.sendSocket.close()
+		except Exception as err:
+			if tipo_resp == "ERROR":
+				print(err)
+			else:
+				error_msg = "Não foi possível encaminhar uma resposta ao sucessor de {}\n".format(id)
+				self.enviaResposta("ERROR", error_msg, ip_solicitante, porta_solicitante)
+		return msg
+		
 
 	def aguardaResposta(self):
 		#TODO: Aguarda resposta
 		# resposta = ...(algo recebido pela rede, no formato acima: tupla (tipo, conteudo)
 		return reposta
-		
+	
+	def obtem_solicitante(self, cmd):
+		if cmd[0]=="STORE":
+			return (cmd[3], cmd[4])
+		if cmd[0]=="RETRIEVE" or cmd[0]=="REMOVE":
+			return (cmd[2], cmd[3])
+		else:
+			return (self.addr, self.port)
 
 
 if __name__ == "__main__":
