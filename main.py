@@ -54,7 +54,7 @@ def root():
 		porta=port, ip=ip,
 		ip_pred=ip_pred, porta_pred=porta_pred,
 		ip_suc=ip_suc, porta_suc=porta_suc,
-		id_mine=id_mine, id_pred=id_pred, id_suc=id_suc)
+		id_mine=id_mine, id_pred=id_pred, id_suc=id_suc, error=False, error_msg=None)
 
 @app.route("/connect", methods=['GET', 'POST'])
 def connect():
@@ -83,11 +83,12 @@ def connect():
 																			porta_suc=str(dht.sucessor[2]),
 																			id_mine = str(dht.id),
 																			id_pred = str(dht.predecessor[0]),
-																			id_suc = str(dht.predecessor[0]))
+																			id_suc = str(dht.predecessor[0]),
+																			error=False, error_msg=None)
 
 		except Exception as err:
 			print(err)
-			return render_template('home.html', conectado=False)
+			return render_template('home.html', conectado=False, error=True, error_msg=err)
 		
 
 @app.route("/dc", methods=['GET'])
@@ -97,7 +98,7 @@ def dc():
 	dhtRepo.leave()
 	#metodo de desconectar do node
 	conectado[0] = False
-	return render_template('home.html', conectado=conectado[0])
+	return render_template('home.html', conectado=conectado[0], error=False, error_msg=None)
 
 @app.route("/add", methods=['GET','POST'])
 def add():
