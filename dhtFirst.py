@@ -444,7 +444,10 @@ class Dht(DhtApi):
 		return self.responsavel_pela_chave(cmd[1])
 
 	def encaminhaSucessor(self, cmd):
-		msg = ' '.join(cmd)+" \n"
+		lista = list(cmd)
+		msg = ' '.join(str(i) for i in lista)+" \n"
+		print("Encaminhando: {}\n".format(msg))
+		
 		#TODO: Enviar para o sucessor.
 		try:
 			self.sendSocket = socket.socket()
@@ -459,6 +462,11 @@ class Dht(DhtApi):
 
 	def enviaResposta(self, tipo_resp, conteudo, ip_solicitante, porta_solicitante):
 		msg = (tipo_resp, conteudo)
+		lista = list(msg)
+		msg = ' '.join(str(i) for i in lista)+" \n"
+		
+		print("Encaminhando: {}\n".format(msg))
+		
 		# TODO: Enviar para ip_solicitante, porta_solicitante.
 		try:
 			self.sendSocket = socket.socket()
