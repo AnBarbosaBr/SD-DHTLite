@@ -93,14 +93,14 @@ class ArmazenamentoLocal(object):
 
 	def store(self, chave, valor):
 		overwrite = False
-		if self.usuarios[chave]:
+		if chave in self.usuarios:
 			overwrite = True
 		self.usuarios[chave] = valor
 		return overwrite
 		
 			
 	def retrieve(self, chave):
-		if(len(self.usuarios)>0):
+		if chave in self.usuarios:
 			return self.usuarios[chave];
 		else:
 			return None;
